@@ -16,6 +16,23 @@ class FileHandler {
     this.contentSection = document.getElementById('contentSection');
     this.contentDisplay = document.getElementById('contentDisplay');
 
+    // 添加进度条元素
+    this.progressContainer = document.getElementById('progressContainer');
+    this.progressBar = document.getElementById('progressBar');
+    this.progressText = document.getElementById('progressText');
+
+    // 文件读取相关属性
+    this.currentFile = null;
+    this.fileReader = null;
+    this.chunkSize = 1024 * 1024; // 1MB 分片大小
+    this.currentChunk = 0;
+    this.totalChunks = 0;
+    this.fileContent = '';
+
+    // 支持的编码列表
+    this.encodings = ['utf-8', 'gbk', 'gb2312', 'big5', 'utf-16le', 'utf-16be'];
+    this.currentEncoding = 'utf-8';
+
     this.initEventListeners();
   }
 
@@ -113,6 +130,7 @@ class FileHandler {
     this.errorMessage.style.display = 'block';
     this.fileInfo.setAttribute('hidden', '');
     this.contentSection.setAttribute('hidden', '');
+    this.hideProgress();
   }
 
   /**
@@ -161,18 +179,170 @@ class FileHandler {
       return;
     }
 
-    const reader = new FileReader();
+    // 重置文件内容
+    this.fileContent = '';
+    this.currentChunk = 0;
 
-    reader.onload = (e) => {
+    // 根据文件大小选择读取方式
+    if (this.currentFile.size < 5 * 1024 * 1024) { // 小于5MB使用文本模式
+      this.readFileAsText();
+    } else { // 大文件使用分片模式
+      this.readFileInChunks();
+    }
+  }
+
+  /**
+   * 文本模式读取文件
+   */
+  readFileAsText() {
+    this.showProgress('正在读取文件...');
+
+    this.fileReader = new FileReader();
+
+    this.fileReader.onload = (e) => {
       const content = e.target.result;
       this.displayFileContent(content);
+      this.hideProgress();
     };
 
-    reader.onerror = () => {
+    this.fileReader.onerror = () => {
       this.showError('读取文件时出错！');
+      this.hideProgress();
     };
 
-    reader.readAsText(this.currentFile);
+    this.fileReader.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percentLoaded = Math.round((e.loaded / e.total) * 100);
+        this.updateProgress(percentLoaded);
+      }
+    };
+
+    this.fileReader.readAsText(this.currentFile, this.currentEncoding);
+  }
+
+  /**
+   * 分片模式读取文件
+   */
+  readFileInChunks() {
+    this.totalChunks = Math.ceil(this.currentFile.size / this.chunkSize);
+    this.showProgress(`正在读取文件 (分片 ${this.currentChunk + 1}/${this.totalChunks})...`);
+
+    this.readNextChunk();
+  }
+
+  /**
+   * 读取下一个分片
+   */
+  readNextChunk() {
+    if (this.currentChunk >= this.totalChunks) {
+      // 所有分片读取完成
+      this.displayFileContent(this.fileContent);
+      this.hideProgress();
+      return;
+    }
+
+    const start = this.currentChunk * this.chunkSize;
+    const end = Math.min(start + this.chunkSize, this.currentFile.size);
+    const blob = this.currentFile.slice(start, end);
+
+    this.fileReader = new FileReader();
+
+    this.fileReader.onload = (e) => {
+      const arrayBuffer = e.target.result;
+
+      try {
+        // 尝试使用当前编码解码
+        const decoder = new TextDecoder(this.currentEncoding);
+        const chunk = decoder.decode(arrayBuffer);
+        this.fileContent += chunk;
+
+        this.currentChunk++;
+        const progress = Math.round((this.currentChunk / this.totalChunks) * 100);
+        this.updateProgress(progress, `正在读取文件 (分片 ${this.currentChunk}/${this.totalChunks})...`);
+
+        // 使用setTimeout避免阻塞UI
+        setTimeout(() => this.readNextChunk(), 10);
+      } catch (error) {
+        // 解码失败，尝试下一个编码
+        this.tryNextEncoding(arrayBuffer);
+      }
+    };
+
+    this.fileReader.onerror = () => {
+      this.showError('读取文件分片时出错！');
+      this.hideProgress();
+    };
+
+    this.fileReader.readAsArrayBuffer(blob);
+  }
+
+  /**
+   * 尝试下一个编码
+   * @param {ArrayBuffer} arrayBuffer - 文件分片数据
+   */
+  tryNextEncoding(arrayBuffer) {
+    const currentIndex = this.encodings.indexOf(this.currentEncoding);
+
+    if (currentIndex < this.encodings.length - 1) {
+      // 尝试下一个编码
+      this.currentEncoding = this.encodings[currentIndex + 1];
+
+      try {
+        const decoder = new TextDecoder(this.currentEncoding);
+        const chunk = decoder.decode(arrayBuffer);
+        this.fileContent += chunk;
+
+        this.currentChunk++;
+        const progress = Math.round((this.currentChunk / this.totalChunks) * 100);
+        this.updateProgress(progress, `正在读取文件 (分片 ${this.currentChunk}/${this.totalChunks})... [使用编码: ${this.currentEncoding}]`);
+
+        // 使用setTimeout避免阻塞UI
+        setTimeout(() => this.readNextChunk(), 10);
+      } catch (error) {
+        // 继续尝试下一个编码
+        this.tryNextEncoding(arrayBuffer);
+      }
+    } else {
+      // 所有编码都尝试失败
+      this.showError('无法识别文件编码，读取失败！');
+      this.hideProgress();
+    }
+  }
+
+  /**
+   * 显示进度条
+   * @param {string} text - 进度文本
+   */
+  showProgress(text = '处理中...') {
+    if (this.progressContainer) {
+      this.progressContainer.style.display = 'block';
+      this.progressBar.style.width = '0%';
+      this.progressText.textContent = text;
+    }
+  }
+
+  /**
+   * 更新进度条
+   * @param {number} percent - 进度百分比
+   * @param {string} text - 进度文本
+   */
+  updateProgress(percent, text = null) {
+    if (this.progressBar) {
+      this.progressBar.style.width = `${percent}%`;
+    }
+
+    if (this.progressText && text) {
+      this.progressText.textContent = text;
+    }
+  }
+
+  /**
+   * 隐藏进度条
+   */
+  hideProgress() {
+    if (this.progressContainer) {
+      this.progressContainer.style.display = 'none';
+    }
   }
 
   /**
@@ -182,6 +352,19 @@ class FileHandler {
   displayFileContent(content) {
     this.contentDisplay.textContent = content;
     this.contentSection.removeAttribute('hidden');
+
+    // 显示使用的编码信息
+    const encodingInfo = document.createElement('div');
+    encodingInfo.className = 'encoding-info';
+    encodingInfo.textContent = `使用编码: ${this.currentEncoding}`;
+
+    // 如果已存在编码信息，先移除
+    const existingInfo = this.contentSection.querySelector('.encoding-info');
+    if (existingInfo) {
+      this.contentSection.removeChild(existingInfo);
+    }
+
+    this.contentSection.insertBefore(encodingInfo, this.contentSection.firstChild);
   }
 }
 
