@@ -138,7 +138,7 @@ class FileHandler {
   showError(message) {
     this.errorMessage.textContent = message;
     this.errorMessage.style.display = 'block';
-    this.fileInfo.setAttribute('hidden', '');
+    this.fileInfo.style.display = 'none';
     this.hideProgress();
   }
 
@@ -157,7 +157,7 @@ class FileHandler {
     this.fileName.textContent = file.name;
     this.fileSize.textContent = this.formatFileSize(file.size);
     this.fileType.textContent = file.type || '未知';
-    this.fileInfo.removeAttribute('hidden');
+    this.fileInfo.style.display = 'block';
 
     // 保存文件引用以便后续处理
     this.currentFile = file;
@@ -371,8 +371,8 @@ class FileHandler {
    */
   displayFileContent(content) {
     // 切换到编辑器视图
-    this.uploadSection.setAttribute('hidden', '');
-    this.editorSection.removeAttribute('hidden');
+    this.uploadSection.style.display = 'none';
+    this.editorSection.style.display = 'block';
 
     // 设置编辑器内容
     this.textEditor.value = content;
