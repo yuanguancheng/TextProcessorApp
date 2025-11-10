@@ -1,0 +1,131 @@
+/* 文件上传区域样式 */
+.upload-section {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.upload-area {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  background-color: #f9f9f9;
+  margin-bottom: 20px;
+}
+
+.upload-area:hover {
+  border-color: #4a90e2;
+  background-color: #f0f7ff;
+}
+
+.upload-area.dragover {
+  border-color: #4a90e2;
+  background-color: #e6f0ff;
+  transform: scale(1.02);
+}
+
+.upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.upload-text {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.upload-hint {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.upload-button {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+  margin-top: 10px;
+}
+
+.upload-button:hover {
+  background-color: #357abf;
+}
+
+/* 错误提示样式 */
+.error-message {
+  color: #e74c3c;
+  background-color: #fadbd8;
+  border: 1px solid #e74c3c;
+  border-radius: 4px;
+  padding: 10px;
+  margin-top: 10px;
+  display: none;
+}
+
+/* 文件信息样式 */
+.file-info {
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.file-info h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.file-info p {
+  margin: 8px 0;
+}
+
+.process-button {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+  transition: background-color 0.3s;
+}
+
+.process-button:hover {
+  background-color: #27ae60;
+}
+
+/* 内容显示区域样式 */
+.content-section {
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.content-display {
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  white-space: pre-wrap;
+  font-family: monospace;
+  max-height: 400px;
+  overflow-y: auto;
+}
