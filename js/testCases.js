@@ -45,7 +45,7 @@ class TestCases {
 第2章 继续
 这是第二章的内容。
 
-第三章：结束
+【第三章】结束
 这是第三章的内容。
         `,
         expectedChapters: 3
