@@ -28,4 +28,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('应用初始化失败:', error);
     textEditor.showMessage('应用初始化失败，部分功能可能无法使用', 'error');
   }
+
+  // 添加测试按钮事件监听
+  const runTestsButton = document.getElementById('runTestsButton');
+  if (runTestsButton) {
+    runTestsButton.addEventListener('click', async () => {
+      const testResults = document.getElementById('testResults');
+      testResults.innerHTML = '<p>正在运行测试...</p>';
+      
+      const testRunner = new TestRunner();
+      await testRunner.runAllTests();
+      
+      // 显示测试结果
+      let html = '<h4>测试结果</h4>';
+      
+      const passedTests = testRunner.results.filter(r => r.passed).length;
+      const totalTests = testRunner.results.length;
+      
+      html += `<p>通过: ${passedTests}/${totalTests}</p>`;
+      
+      // 按类型分组显示
+      const groupedResults = {};
+      for (const result of testRunner.results) {
+        if (!groupedResults[result.type]) {
+          groupedResults[result.type] = [];
+        }
+        groupedResults[result.type].push(result);
+      }
+      
+      for (const [type, results] of Object.entries(groupedResults)) {
+        html += `<h5>${type.toUpperCase()} 测试</h5><ul>`;
+        
+        for (const result of results) {
+          if (result.passed) {
+            html += `<li class="test-pass">✓ ${result.name}</li>`;
+          } else {
+            html += `<li class="test-fail">✗ ${result.name}: ${result.error || `期望: ${result.expected}, 实际: ${result.actual}`}</li>`;
+          }
+        }
+        
+        html += '</ul>';
+      }
+      
+      testResults.innerHTML = html;
+    });
+  }
 });

@@ -535,6 +535,104 @@ class ChapterDetector {
     }
     return false;
   }
+
+  /**
+   * 检测混合章节格式
+   */
+  detectMixedChapterFormats(content) {
+    // 1. 统计所有章节格式的出现频率
+    const formatStats = {};
+    
+    for (const rule of this.chapterRules) {
+      const matches = [...content.matchAll(rule.pattern)];
+      if (matches.length > 0) {
+        formatStats[rule.name] = {
+          count: matches.length,
+          priority: rule.priority,
+          rule: rule
+        };
+      }
+    }
+    
+    // 2. 按优先级和出现频率排序
+    const sortedFormats = Object.values(formatStats).sort((a, b) => {
+      // 优先级高的排在前面
+      if (a.priority !== b.priority) {
+        return b.priority - a.priority;
+      }
+      // 优先级相同时，出现次数多的排在前面
+      return b.count - a.count;
+    });
+    
+    // 3. 检测是否为混合格式
+    if (sortedFormats.length > 1) {
+      const topFormat = sortedFormats[0];
+      const secondFormat = sortedFormats[1];
+      
+      // 如果第二多的格式出现次数超过第一格式的30%，认为是混合格式
+      if (secondFormat.count / topFormat.count > 0.3) {
+        return {
+          isMixed: true,
+          primaryFormat: topFormat,
+          secondaryFormats: sortedFormats.slice(1),
+          allFormats: sortedFormats
+        };
+      }
+    }
+    
+    return {
+      isMixed: false,
+      primaryFormat: sortedFormats[0] || null,
+      secondaryFormats: [],
+      allFormats: sortedFormats
+    };
+  }
+
+  /**
+   * 处理混合格式的章节检测
+   */
+  performMixedFormatChapterDetection(content) {
+    const formatAnalysis = this.detectMixedChapterFormats(content);
+    
+    if (!formatAnalysis.isMixed) {
+      // 非混合格式，使用标准检测
+      return this.performAutoChapterDivision(content);
+    }
+    
+    // 混合格式处理
+    const allMatches = [];
+    
+    // 收集所有格式的匹配项
+    for (const format of formatAnalysis.allFormats) {
+      const matches = [...content.matchAll(format.rule.pattern)];
+      for (const match of matches) {
+        allMatches.push({
+          title: match[0].trim(),
+          position: match.index,
+          rule: format.rule.name,
+          priority: format.rule.priority
+        });
+      }
+    }
+    
+    // 按位置排序
+    const sortedMatches = allMatches.sort((a, b) => a.position - b.position);
+    
+    // 处理重叠匹配
+    const filteredMatches = this.filterOverlappingMatches(sortedMatches);
+    
+    // 分割内容
+    const chapters = this.splitContentIntoChapters(content, filteredMatches);
+    
+    return {
+      chapters,
+      matches: filteredMatches,
+      validation: this.validateChapterDivision(chapters),
+      totalChapters: chapters.length,
+      isMixedFormat: true,
+      formatAnalysis
+    };
+  }
 }
 
 // 导出模块

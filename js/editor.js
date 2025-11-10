@@ -851,6 +851,7 @@ class TextEditor {
   detectChapters() {
     const content = this.editor.value;
 
+    // 边界测试：空内容
     if (!content.trim()) {
       this.showMessage('请先输入文本内容');
       return;
@@ -859,6 +860,16 @@ class TextEditor {
     // 使用章节检测器进行自动分章
     const chapterDetector = new ChapterDetector();
     const result = chapterDetector.performAutoChapterDivision(content);
+
+    // 边界测试：单章节文档
+    if (result.chapters.length === 1) {
+      this.showMessage('文档仅包含一个章节，无需分章', 'info');
+      // 仍然显示章节列表，但只有一个章节
+      this.chapters = result.chapters;
+      this.displayChapterList();
+      this.updateWordCount();
+      return;
+    }
 
     // 更新章节数据
     this.chapters = result.chapters;

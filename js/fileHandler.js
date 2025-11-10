@@ -182,6 +182,18 @@ class FileHandler {
       return;
     }
 
+    // 边界测试：检查空文档
+    if (this.currentFile.size === 0) {
+      this.showError('文件为空，无法处理！');
+      return;
+    }
+
+    // 边界测试：检查超大文件（超过50MB）
+    if (this.currentFile.size > 50 * 1024 * 1024) {
+      this.showError('文件过大（超过50MB），可能影响性能！');
+      return;
+    }
+
     // 重置文件内容
     this.fileContent = '';
     this.currentChunk = 0;
@@ -409,6 +421,76 @@ class FileHandler {
     // 更新字数信息
     const words = content.replace(/\s/g, '').length;
     this.wordCount.textContent = `字数: ${words}`;
+  }
+
+  /**
+   * 检测文件编码
+   */
+  detectFileEncoding(arrayBuffer) {
+    // 检测BOM标记
+    if (arrayBuffer.byteLength >= 3) {
+      const view = new Uint8Array(arrayBuffer);
+      
+      // UTF-8 BOM
+      if (view[0] === 0xEF && view[1] === 0xBB && view[2] === 0xBF) {
+        return 'utf-8';
+      }
+      
+      // UTF-16 LE BOM
+      if (view[0] === 0xFF && view[1] === 0xFE) {
+        return 'utf-16le';
+      }
+      
+      // UTF-16 BE BOM
+      if (view[0] === 0xFE && view[1] === 0xFF) {
+        return 'utf-16be';
+      }
+    }
+    
+    // 尝试使用不同编码解码
+    const encodings = ['utf-8', 'gbk', 'gb2312', 'big5'];
+    
+    for (const encoding of encodings) {
+      try {
+        const decoder = new TextDecoder(encoding, { fatal: true });
+        const decoded = decoder.decode(arrayBuffer.slice(0, Math.min(1024, arrayBuffer.byteLength)));
+        
+        // 检查解码结果是否有效
+        if (this.isValidText(decoded)) {
+          return encoding;
+        }
+      } catch (e) {
+        // 解码失败，尝试下一个编码
+        continue;
+      }
+    }
+    
+    // 默认返回UTF-8
+    return 'utf-8';
+  }
+
+  /**
+   * 检查文本是否有效
+   */
+  isValidText(text) {
+    if (!text || text.length === 0) return false;
+    
+    // 计算非ASCII字符比例
+    const nonAsciiCount = (text.match(/[^\x00-\x7F]/g) || []).length;
+    const ratio = nonAsciiCount / text.length;
+    
+    // 如果非ASCII字符比例过高，可能是乱码
+    if (ratio > 0.8 && text.length > 10) {
+      return false;
+    }
+    
+    // 检查是否包含过多控制字符
+    const controlCharCount = (text.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g) || []).length;
+    if (controlCharCount / text.length > 0.1) {
+      return false;
+    }
+    
+    return true;
   }
 }
 
