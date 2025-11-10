@@ -30,6 +30,21 @@ class TextEditor {
     this.chapterListPane = document.getElementById('chapterListPane');
     this.chapterListOverlay = document.getElementById('chapterListOverlay');
 
+    // 交互体验增强元素
+    this.readingModeButton = document.getElementById('readingModeButton');
+    this.loadingOverlay = document.getElementById('loadingOverlay');
+    this.messageContainer = document.getElementById('messageContainer');
+
+    // 阅读模式状态
+    this.readingModeEnabled = false;
+    this.readingSettings = {
+      fontFamily: "'Microsoft YaHei', sans-serif",
+      fontSize: "16px",
+      lineHeight: "1.6",
+      backgroundColor: "#f8f9fa",
+      textColor: "#333333"
+    };
+
     // 章节数据
     this.chapters = [];
     this.currentChapter = null;
@@ -160,6 +175,21 @@ class TextEditor {
     // 移动端遮罩层点击事件
     if (this.chapterListOverlay) {
       this.chapterListOverlay.addEventListener('click', () => this.closeMobileMenu());
+    }
+
+    // 阅读模式按钮事件监听
+    if (this.readingModeButton) {
+      this.readingModeButton.addEventListener('click', () => this.toggleReadingMode());
+    }
+
+    // 预览区滚动事件，用于章节高亮同步
+    if (this.preview) {
+      this.preview.addEventListener('scroll', () => this.highlightCurrentChapter());
+    }
+
+    // 编辑器滚动事件，用于章节高亮同步
+    if (this.editor) {
+      this.editor.addEventListener('scroll', () => this.highlightCurrentChapter());
     }
   }
 
@@ -1441,6 +1471,295 @@ class TextEditor {
       this.chapterListOverlay.classList.remove('active');
       document.body.style.overflow = ''; // 恢复背景滚动
     }
+  }
+
+  /**
+   * 显示加载动画
+   */
+  showLoading() {
+    if (this.loadingOverlay) {
+      this.loadingOverlay.classList.add('active');
+    }
+  }
+
+  /**
+   * 隐藏加载动画
+   */
+  hideLoading() {
+    if (this.loadingOverlay) {
+      this.loadingOverlay.classList.remove('active');
+    }
+  }
+
+  /**
+   * 显示消息提示
+   * @param {string} message - 消息内容
+   * @param {string} type - 消息类型 ('info', 'success', 'warning', 'error')
+   */
+  showMessage(message, type = 'info') {
+    if (!this.messageContainer) return;
+
+    // 创建消息元素
+    const messageElement = document.createElement('div');
+    messageElement.className = `message-toast ${type}`;
+    messageElement.textContent = message;
+
+    // 添加到容器
+    this.messageContainer.appendChild(messageElement);
+
+    // 3秒后自动移除
+    setTimeout(() => {
+      if (messageElement.parentNode) {
+        messageElement.parentNode.removeChild(messageElement);
+      }
+    }, 3000);
+  }
+
+  /**
+   * 滚动同步：高亮当前章节
+   */
+  highlightCurrentChapter() {
+    if (!this.editor || !this.preview || this.chapters.length === 0) return;
+
+    // 获取编辑器滚动位置
+    const editorScrollTop = this.editor.scrollTop;
+    const editorHeight = this.editor.clientHeight;
+    
+    // 计算当前可见区域
+    const visibleStart = editorScrollTop;
+    const visibleEnd = editorScrollTop + editorHeight;
+
+    // 查找当前可见的章节
+    let currentHighlightedChapter = -1;
+    
+    this.chapters.forEach((chapter, index) => {
+      // 简单实现：根据章节在内容中的大致位置判断
+      const content = this.editor.value;
+      const chapterStart = content.indexOf(chapter.content);
+      
+      if (chapterStart >= 0) {
+        // 估算章节在编辑器中的位置（简单实现）
+        const estimatedPosition = (chapterStart / content.length) * this.editor.scrollHeight;
+        
+        if (estimatedPosition >= visibleStart && estimatedPosition <= visibleEnd) {
+          currentHighlightedChapter = index;
+        }
+      }
+    });
+
+    // 更新章节高亮
+    this.updateChapterHighlight(currentHighlightedChapter);
+  }
+
+  /**
+   * 更新章节高亮状态
+   * @param {number} chapterIndex - 要高亮的章节索引
+   */
+  updateChapterHighlight(chapterIndex) {
+    if (!this.chapterList) return;
+
+    // 移除所有高亮
+    const chapterItems = this.chapterList.querySelectorAll('.chapter-item');
+    chapterItems.forEach(item => {
+      item.classList.remove('highlighted');
+    });
+
+    // 添加当前章节高亮
+    if (chapterIndex >= 0 && chapterIndex < chapterItems.length) {
+      chapterItems[chapterIndex].classList.add('highlighted');
+    }
+  }
+
+  /**
+   * 切换阅读模式
+   */
+  toggleReadingMode() {
+    this.readingModeEnabled = !this.readingModeEnabled;
+    
+    if (this.readingModeEnabled) {
+      this.showReadingModeSettings();
+    } else {
+      this.exitReadingMode();
+    }
+  }
+
+  /**
+   * 显示阅读模式设置
+   */
+  showReadingModeSettings() {
+    const readingModeDialog = document.getElementById('readingModeDialog');
+    const readingDialogClose = document.getElementById('readingDialogClose');
+    const resetReadingSettings = document.getElementById('resetReadingSettings');
+    const applyReadingSettings = document.getElementById('applyReadingSettings');
+    
+    if (!readingModeDialog || !readingDialogClose || !resetReadingSettings || !applyReadingSettings) {
+      this.enterReadingMode();
+      return;
+    }
+
+    // 设置当前值
+    this.setReadingModeDialogValues();
+
+    // 显示对话框
+    readingModeDialog.hidden = false;
+
+    // 添加事件监听
+    const closeDialog = () => {
+      readingModeDialog.hidden = true;
+    };
+
+    readingDialogClose.onclick = closeDialog;
+
+    resetReadingSettings.onclick = () => {
+      this.resetReadingSettings();
+      this.setReadingModeDialogValues();
+    };
+
+    applyReadingSettings.onclick = () => {
+      this.applyReadingSettings();
+      closeDialog();
+      this.enterReadingMode();
+    };
+
+    // 实时更新显示值
+    const fontSizeInput = document.getElementById('fontSize');
+    const fontSizeValue = document.getElementById('fontSizeValue');
+    const lineHeightInput = document.getElementById('lineHeight');
+    const lineHeightValue = document.getElementById('lineHeightValue');
+
+    if (fontSizeInput && fontSizeValue) {
+      fontSizeInput.addEventListener('input', () => {
+        fontSizeValue.textContent = `${fontSizeInput.value}px`;
+      });
+    }
+
+    if (lineHeightInput && lineHeightValue) {
+      lineHeightInput.addEventListener('input', () => {
+        lineHeightValue.textContent = lineHeightInput.value;
+      });
+    }
+
+    // 点击对话框外部关闭
+    readingModeDialog.onclick = (e) => {
+      if (e.target === readingModeDialog) {
+        closeDialog();
+      }
+    };
+  }
+
+  /**
+   * 设置阅读模式对话框的值
+   */
+  setReadingModeDialogValues() {
+    const fontFamilySelect = document.getElementById('fontFamily');
+    const fontSizeInput = document.getElementById('fontSize');
+    const fontSizeValue = document.getElementById('fontSizeValue');
+    const lineHeightInput = document.getElementById('lineHeight');
+    const lineHeightValue = document.getElementById('lineHeightValue');
+    const backgroundColorInput = document.getElementById('backgroundColor');
+    const textColorInput = document.getElementById('textColor');
+
+    if (fontFamilySelect) fontFamilySelect.value = this.readingSettings.fontFamily;
+    if (fontSizeInput) fontSizeInput.value = parseInt(this.readingSettings.fontSize);
+    if (fontSizeValue) fontSizeValue.textContent = this.readingSettings.fontSize;
+    if (lineHeightInput) lineHeightInput.value = this.readingSettings.lineHeight;
+    if (lineHeightValue) lineHeightValue.textContent = this.readingSettings.lineHeight;
+    if (backgroundColorInput) backgroundColorInput.value = this.readingSettings.backgroundColor;
+    if (textColorInput) textColorInput.value = this.readingSettings.textColor;
+  }
+
+  /**
+   * 应用阅读模式设置
+   */
+  applyReadingSettings() {
+    const fontFamilySelect = document.getElementById('fontFamily');
+    const fontSizeInput = document.getElementById('fontSize');
+    const lineHeightInput = document.getElementById('lineHeight');
+    const backgroundColorInput = document.getElementById('backgroundColor');
+    const textColorInput = document.getElementById('textColor');
+
+    if (fontFamilySelect) this.readingSettings.fontFamily = fontFamilySelect.value;
+    if (fontSizeInput) this.readingSettings.fontSize = `${fontSizeInput.value}px`;
+    if (lineHeightInput) this.readingSettings.lineHeight = lineHeightInput.value;
+    if (backgroundColorInput) this.readingSettings.backgroundColor = backgroundColorInput.value;
+    if (textColorInput) this.readingSettings.textColor = textColorInput.value;
+  }
+
+  /**
+   * 重置阅读模式设置
+   */
+  resetReadingSettings() {
+    this.readingSettings = {
+      fontFamily: "'Microsoft YaHei', sans-serif",
+      fontSize: "16px",
+      lineHeight: "1.6",
+      backgroundColor: "#f8f9fa",
+      textColor: "#333333"
+    };
+  }
+
+  /**
+   * 进入阅读模式
+   */
+  enterReadingMode() {
+    const editorSection = document.getElementById('editorSection');
+    if (editorSection) {
+      editorSection.classList.add('reading-mode');
+    }
+
+    // 应用CSS变量
+    this.applyReadingModeStyles();
+
+    // 更新按钮文本
+    if (this.readingModeButton) {
+      this.readingModeButton.textContent = '退出阅读';
+    }
+
+    this.showMessage('已进入阅读模式', 'success');
+  }
+
+  /**
+   * 退出阅读模式
+   */
+  exitReadingMode() {
+    const editorSection = document.getElementById('editorSection');
+    if (editorSection) {
+      editorSection.classList.remove('reading-mode');
+    }
+
+    // 移除CSS变量
+    this.removeReadingModeStyles();
+
+    // 更新按钮文本
+    if (this.readingModeButton) {
+      this.readingModeButton.textContent = '阅读模式';
+    }
+
+    this.showMessage('已退出阅读模式', 'info');
+  }
+
+  /**
+   * 应用阅读模式CSS变量
+   */
+  applyReadingModeStyles() {
+    const root = document.documentElement;
+    root.style.setProperty('--reading-font-family', this.readingSettings.fontFamily);
+    root.style.setProperty('--reading-font-size', this.readingSettings.fontSize);
+    root.style.setProperty('--reading-line-height', this.readingSettings.lineHeight);
+    root.style.setProperty('--reading-bg-color', this.readingSettings.backgroundColor);
+    root.style.setProperty('--reading-text-color', this.readingSettings.textColor);
+  }
+
+  /**
+   * 移除阅读模式CSS变量
+   */
+  removeReadingModeStyles() {
+    const root = document.documentElement;
+    root.style.removeProperty('--reading-font-family');
+    root.style.removeProperty('--reading-font-size');
+    root.style.removeProperty('--reading-line-height');
+    root.style.removeProperty('--reading-bg-color');
+    root.style.removeProperty('--reading-text-color');
   }
 
   /**

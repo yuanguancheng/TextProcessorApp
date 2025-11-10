@@ -94,6 +94,7 @@
           <h2>文本编辑器</h2>
           <div class="editor-controls">
             <button class="control-button" id="togglePreviewButton">显示/隐藏预览</button>
+            <button class="control-button" id="readingModeButton">阅读模式</button>
             <button class="control-button" id="backToUploadButton">返回上传</button>
           </div>
         </div>
@@ -272,6 +273,58 @@
       </div>
     </div>
   </div>
+
+  <!-- 阅读模式设置对话框 -->
+  <div class="dialog" id="readingModeDialog" hidden>
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3>阅读模式设置</h3>
+        <button class="dialog-close" id="readingDialogClose">×</button>
+      </div>
+      <div class="dialog-body">
+        <div class="form-group">
+          <label for="fontFamily">字体:</label>
+          <select id="fontFamily" class="form-input">
+            <option value="'Microsoft YaHei', sans-serif">微软雅黑</option>
+            <option value="'SimSun', serif">宋体</option>
+            <option value="'SimHei', sans-serif">黑体</option>
+            <option value="'KaiTi', serif">楷体</option>
+            <option value="'Consolas', 'Monaco', monospace">等宽字体</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="fontSize">字体大小:</label>
+          <input type="range" id="fontSize" class="form-input" min="12" max="24" value="16">
+          <span id="fontSizeValue">16px</span>
+        </div>
+        <div class="form-group">
+          <label for="lineHeight">行距:</label>
+          <input type="range" id="lineHeight" class="form-input" min="1.2" max="2.5" step="0.1" value="1.6">
+          <span id="lineHeightValue">1.6</span>
+        </div>
+        <div class="form-group">
+          <label for="backgroundColor">背景颜色:</label>
+          <input type="color" id="backgroundColor" class="form-input" value="#ffffff">
+        </div>
+        <div class="form-group">
+          <label for="textColor">文字颜色:</label>
+          <input type="color" id="textColor" class="form-input" value="#333333">
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="dialog-button" id="resetReadingSettings">重置</button>
+        <button class="dialog-button" id="applyReadingSettings">应用</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 加载动画 -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <!-- 消息提示容器 -->
+  <div id="messageContainer"></div>
 
   <script src="js/fileHandler.js"></script>
   <script src="js/chapterDetector.js"></script>
