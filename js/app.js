@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 初始化文本编辑器
   const textEditor = new TextEditor();
 
+  // 初始化章节检测器
+  const chapterDetector = new ChapterDetector();
+
   // 可以在这里添加其他初始化代码
   console.log('文本处理器应用已初始化');
 });
