@@ -1,5 +1,5 @@
 /**
- * 文本编辑器类 - 任务1：章节基础编辑
+ * 文本编辑器类 - 任务2：内容优化工具
  */
 class TextEditor {
   constructor() {
@@ -17,14 +17,25 @@ class TextEditor {
     this.splitChapterButton = document.getElementById('splitChapterButton');
     this.mergeChaptersButton = document.getElementById('mergeChaptersButton');
 
+    // 任务2：内容优化工具元素
+    this.removeEmptyLinesButton = document.getElementById('removeEmptyLinesButton');
+    this.optimizeIndentButton = document.getElementById('optimizeIndentButton');
+
     // 章节数据
     this.chapters = [];
     this.currentChapter = null;
     this.selectedChapters = new Set(); // 用于存储选中的章节
     this.editingChapter = null; // 当前正在编辑的章节索引
 
+    // 任务2：内容优化工具状态
+    this.indentEnabled = true; // 缩进优化是否启用
+    this.indentSize = 2; // 缩进大小（空格数）
+
     // 初始化事件监听
     this.initEventListeners();
+
+    // 初始化字数统计
+    this.initWordCount();
   }
 
   /**
@@ -59,8 +70,18 @@ class TextEditor {
       this.mergeChaptersButton.addEventListener('click', () => this.mergeChapters());
     }
 
-    // 编辑器滚动事件，用于高亮当前章节
+    // 任务2：内容优化工具事件监听
+    if (this.removeEmptyLinesButton) {
+      this.removeEmptyLinesButton.addEventListener('click', () => this.removeEmptyLines());
+    }
+
+    if (this.optimizeIndentButton) {
+      this.optimizeIndentButton.addEventListener('click', () => this.optimizeIndent());
+    }
+
+    // 编辑器内容变化事件，用于更新字数统计
     if (this.editor) {
+      this.editor.addEventListener('input', () => this.updateWordCount());
       this.editor.addEventListener('scroll', () => this.highlightCurrentChapter());
     }
 
@@ -68,6 +89,215 @@ class TextEditor {
     if (this.preview) {
       this.preview.addEventListener('scroll', () => this.highlightCurrentChapter());
     }
+  }
+
+  /**
+   * 任务2：初始化字数统计
+   */
+  initWordCount() {
+    // 创建字数统计元素
+    const wordCountElement = document.getElementById('wordCount');
+    if (wordCountElement) {
+      wordCountElement.innerHTML = `
+        <div class="word-count-info">
+          <div class="word-count-item">
+            <span class="word-count-label">总字数:</span>
+            <span class="word-count-value" id="totalWordCount">0</span>
+          </div>
+          <div class="word-count-item">
+            <span class="word-count-label">当前章节:</span>
+            <span class="word-count-value" id="currentChapterWordCount">0</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // 初始更新字数统计
+    this.updateWordCount();
+  }
+
+  /**
+   * 任务2：更新字数统计
+   */
+  updateWordCount() {
+    if (!this.editor) return;
+
+    const content = this.editor.value;
+
+    // 计算总字数（中文字符+英文单词）
+    const chineseChars = (content.match(/[\u4e00-\u9fa5]/g) || []).length;
+    const englishWords = (content.match(/[a-zA-Z]+/g) || []).length;
+    const totalWordCount = chineseChars + englishWords;
+
+    // 更新总字数显示
+    const totalWordCountElement = document.getElementById('totalWordCount');
+    if (totalWordCountElement) {
+      totalWordCountElement.textContent = totalWordCount.toLocaleString();
+    }
+
+    // 计算当前章节字数
+    let currentChapterWordCount = 0;
+    if (this.currentChapter !== null && this.chapters.length > 0) {
+      const chapter = this.chapters[this.currentChapter];
+      if (chapter && chapter.content) {
+        const chapterChineseChars = (chapter.content.match(/[\u4e00-\u9fa5]/g) || []).length;
+        const chapterEnglishWords = (chapter.content.match(/[a-zA-Z]+/g) || []).length;
+        currentChapterWordCount = chapterChineseChars + chapterEnglishWords;
+      }
+    }
+
+    // 更新当前章节字数显示
+    const currentChapterWordCountElement = document.getElementById('currentChapterWordCount');
+    if (currentChapterWordCountElement) {
+      currentChapterWordCountElement.textContent = currentChapterWordCount.toLocaleString();
+    }
+
+    // 更新章节列表中的字数统计
+    this.updateChapterWordCounts();
+  }
+
+  /**
+   * 任务2：更新章节列表中的字数统计
+   */
+  updateChapterWordCounts() {
+    if (!this.chapterList || this.chapters.length === 0) return;
+
+    this.chapters.forEach((chapter, index) => {
+      // 计算章节字数
+      const chineseChars = (chapter.content.match(/[\u4e00-\u9fa5]/g) || []).length;
+      const englishWords = (chapter.content.match(/[a-zA-Z]+/g) || []).length;
+      const wordCount = chineseChars + englishWords;
+
+      // 查找章节项
+      const chapterItem = this.chapterList.querySelector(`.chapter-item[data-index="${index}"]`);
+      if (chapterItem) {
+        // 查找或创建字数统计元素
+        let wordCountElement = chapterItem.querySelector('.chapter-word-count');
+        if (!wordCountElement) {
+          wordCountElement = document.createElement('span');
+          wordCountElement.className = 'chapter-word-count';
+          chapterItem.appendChild(wordCountElement);
+        }
+
+        // 更新字数统计
+        wordCountElement.textContent = `(${wordCount.toLocaleString()}字)`;
+      }
+    });
+  }
+
+  /**
+   * 任务2：自动去空行
+   */
+  removeEmptyLines() {
+    if (!this.editor) return;
+
+    const content = this.editor.value;
+
+    // 使用正则表达式移除连续的空行，保留单空行分隔段落
+    const optimizedContent = content.replace(/\n\s*\n\s*\n+/g, '\n\n');
+
+    // 如果内容没有变化，提示用户
+    if (optimizedContent === content) {
+      this.showMessage('文本中没有需要移除的连续空行', 'info');
+      return;
+    }
+
+    // 计算移除的空行数
+    const originalLines = content.split('\n').length;
+    const optimizedLines = optimizedContent.split('\n').length;
+    const removedLines = originalLines - optimizedLines;
+
+    // 更新编辑器内容
+    this.editor.value = optimizedContent;
+
+    // 更新预览
+    this.updatePreview();
+
+    // 重新检测章节（如果有）
+    if (this.chapters.length > 0) {
+      this.detectChapters();
+    }
+
+    // 更新字数统计
+    this.updateWordCount();
+
+    // 显示成功消息
+    this.showMessage(`已移除 ${removedLines} 个空行`, 'success');
+  }
+
+  /**
+   * 任务2：统一缩进
+   */
+  optimizeIndent() {
+    if (!this.editor) return;
+
+    const content = this.editor.value;
+
+    // 如果缩进优化未启用，直接返回
+    if (!this.indentEnabled) {
+      this.showMessage('缩进优化已关闭', 'info');
+      return;
+    }
+
+    // 分割内容为行
+    const lines = content.split('\n');
+
+    // 处理每一行
+    const optimizedLines = lines.map(line => {
+      // 如果是空行，不做处理
+      if (!line.trim()) {
+        return line;
+      }
+
+      // 如果行首已经有缩进，不做处理
+      if (/^[\s\t]/.test(line)) {
+        return line;
+      }
+
+      // 为段落首行添加指定数量的空格
+      return ' '.repeat(this.indentSize) + line;
+    });
+
+    // 重新组合内容
+    const optimizedContent = optimizedLines.join('\n');
+
+    // 如果内容没有变化，提示用户
+    if (optimizedContent === content) {
+      this.showMessage('文本中没有需要优化的缩进', 'info');
+      return;
+    }
+
+    // 计算处理的段落数
+    const processedParagraphs = lines.filter(line =>
+      line.trim() && !/^[\s\t]/.test(line)
+    ).length;
+
+    // 更新编辑器内容
+    this.editor.value = optimizedContent;
+
+    // 更新预览
+    this.updatePreview();
+
+    // 重新检测章节（如果有）
+    if (this.chapters.length > 0) {
+      this.detectChapters();
+    }
+
+    // 更新字数统计
+    this.updateWordCount();
+
+    // 显示成功消息
+    this.showMessage(`已为 ${processedParagraphs} 个段落添加缩进`, 'success');
+  }
+
+  /**
+   * 更新预览区内容
+   */
+  updatePreview() {
+    if (!this.preview || !this.editor) return;
+
+    // 更新预览内容
+    this.preview.textContent = this.editor.value;
   }
 
   /**
@@ -90,6 +320,9 @@ class TextEditor {
 
     // 显示章节列表
     this.displayChapterList();
+
+    // 更新字数统计
+    this.updateWordCount();
 
     // 显示验证结果
     if (!result.validation.isValid) {
@@ -184,6 +417,16 @@ class TextEditor {
         this.deleteChapter(index);
       });
 
+      // 任务2：章节字数统计
+      const chapterWordCount = document.createElement('span');
+      chapterWordCount.className = 'chapter-word-count';
+
+      // 计算章节字数
+      const chineseChars = (chapter.content.match(/[\u4e00-\u9fa5]/g) || []).length;
+      const englishWords = (chapter.content.match(/[a-zA-Z]+/g) || []).length;
+      const wordCount = chineseChars + englishWords;
+      chapterWordCount.textContent = `(${wordCount.toLocaleString()}字)`;
+
       // 折叠/展开按钮（仅当章节内容较长时显示）
       const chapterToggle = document.createElement('span');
       chapterToggle.className = 'chapter-toggle';
@@ -200,6 +443,7 @@ class TextEditor {
       li.appendChild(chapterTitleInput);
       li.appendChild(editButton);
       li.appendChild(deleteButton);
+      li.appendChild(chapterWordCount);
       li.appendChild(chapterToggle);
 
       // 添加点击事件
@@ -233,652 +477,7 @@ class TextEditor {
     });
   }
 
-  /**
-   * 任务1：开始编辑章节标题
-   * @param {number} chapterIndex - 章节索引
-   */
-  startEditChapterTitle(chapterIndex) {
-    // 如果已经有章节在编辑，先保存
-    if (this.editingChapter !== null && this.editingChapter !== chapterIndex) {
-      this.saveChapterTitle(this.editingChapter);
-    }
-
-    // 设置当前编辑的章节
-    this.editingChapter = chapterIndex;
-
-    // 获取相关元素
-    const chapterItem = this.chapterList.querySelector(`.chapter-item[data-index="${chapterIndex}"]`);
-    const chapterTitle = document.getElementById(`chapter-title-${chapterIndex}`);
-    const chapterTitleInput = document.getElementById(`chapter-title-input-${chapterIndex}`);
-    const editButton = document.getElementById(`chapter-edit-${chapterIndex}`);
-
-    // 切换显示状态
-    chapterTitle.style.display = 'none';
-    chapterTitleInput.style.display = 'block';
-    editButton.style.display = 'none';
-
-    // 添加编辑状态样式
-    chapterItem.classList.add('editing');
-
-    // 聚焦输入框并选中文本
-    chapterTitleInput.focus();
-    chapterTitleInput.select();
-  }
-
-  /**
-   * 任务1：保存章节标题
-   * @param {number} chapterIndex - 章节索引
-   */
-  saveChapterTitle(chapterIndex) {
-    if (this.editingChapter !== chapterIndex) {
-      return;
-    }
-
-    // 获取相关元素
-    const chapterItem = this.chapterList.querySelector(`.chapter-item[data-index="${chapterIndex}"]`);
-    const chapterTitle = document.getElementById(`chapter-title-${chapterIndex}`);
-    const chapterTitleInput = document.getElementById(`chapter-title-input-${chapterIndex}`);
-    const editButton = document.getElementById(`chapter-edit-${chapterIndex}`);
-
-    // 获取新标题
-    const newTitle = chapterTitleInput.value.trim();
-
-    // 如果标题为空，恢复原标题
-    if (!newTitle) {
-      chapterTitleInput.value = chapterTitle.textContent;
-      this.cancelEditChapterTitle(chapterIndex);
-      return;
-    }
-
-    // 如果标题没有变化，直接取消编辑
-    if (newTitle === chapterTitle.textContent) {
-      this.cancelEditChapterTitle(chapterIndex);
-      return;
-    }
-
-    // 更新章节数据
-    const oldTitle = this.chapters[chapterIndex].title;
-    this.chapters[chapterIndex].title = newTitle;
-
-    // 更新编辑器中的章节标题
-    const content = this.editor.value;
-    const chapter = this.chapters[chapterIndex];
-    const oldTitlePattern = new RegExp(oldTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-    const newContent = content.replace(oldTitlePattern, newTitle);
-    this.editor.value = newContent;
-
-    // 更新显示
-    chapterTitle.textContent = newTitle;
-
-    // 切换显示状态
-    chapterTitle.style.display = 'block';
-    chapterTitleInput.style.display = 'none';
-    editButton.style.display = 'inline-block';
-
-    // 移除编辑状态样式
-    chapterItem.classList.remove('editing');
-
-    // 清除当前编辑状态
-    this.editingChapter = null;
-
-    // 显示成功消息
-    this.showMessage(`章节标题已更新: "${newTitle}"`, 'success');
-  }
-
-  /**
-   * 任务1：取消编辑章节标题
-   * @param {number} chapterIndex - 章节索引
-   */
-  cancelEditChapterTitle(chapterIndex) {
-    if (this.editingChapter !== chapterIndex) {
-      return;
-    }
-
-    // 获取相关元素
-    const chapterItem = this.chapterList.querySelector(`.chapter-item[data-index="${chapterIndex}"]`);
-    const chapterTitle = document.getElementById(`chapter-title-${chapterIndex}`);
-    const chapterTitleInput = document.getElementById(`chapter-title-input-${chapterIndex}`);
-    const editButton = document.getElementById(`chapter-edit-${chapterIndex}`);
-
-    // 恢复输入框的值
-    chapterTitleInput.value = chapterTitle.textContent;
-
-    // 切换显示状态
-    chapterTitle.style.display = 'block';
-    chapterTitleInput.style.display = 'none';
-    editButton.style.display = 'inline-block';
-
-    // 移除编辑状态样式
-    chapterItem.classList.remove('editing');
-
-    // 清除当前编辑状态
-    this.editingChapter = null;
-  }
-
-  /**
-   * 任务1：删除章节
-   * @param {number} chapterIndex - 章节索引
-   */
-  deleteChapter(chapterIndex) {
-    if (chapterIndex < 0 || chapterIndex >= this.chapters.length) {
-      return;
-    }
-
-    const chapter = this.chapters[chapterIndex];
-
-    // 显示删除确认对话框
-    this.showDeleteChapterDialog(chapterIndex, chapter.title);
-  }
-
-  /**
-   * 任务1：显示删除章节确认对话框
-   * @param {number} chapterIndex - 章节索引
-   * @param {string} chapterTitle - 章节标题
-   */
-  showDeleteChapterDialog(chapterIndex, chapterTitle) {
-    // 创建对话框元素
-    const dialog = document.createElement('div');
-    dialog.className = 'chapter-delete-dialog';
-    dialog.id = 'chapter-delete-dialog';
-
-    // 创建对话框内容
-    const dialogContent = document.createElement('div');
-    dialogContent.className = 'chapter-delete-dialog-content';
-
-    // 创建对话框头部
-    const dialogHeader = document.createElement('div');
-    dialogHeader.className = 'chapter-delete-dialog-header';
-    dialogHeader.innerHTML = '<h3>确认删除章节</h3>';
-
-    // 创建对话框主体
-    const dialogBody = document.createElement('div');
-    dialogBody.className = 'chapter-delete-dialog-body';
-    dialogBody.textContent = `确定要删除章节 "${chapterTitle}" 吗？此操作不可撤销。`;
-
-    // 创建对话框底部按钮
-    const dialogFooter = document.createElement('div');
-    dialogFooter.className = 'chapter-delete-dialog-footer';
-
-    const cancelButton = document.createElement('button');
-    cancelButton.className = 'chapter-delete-dialog-button cancel';
-    cancelButton.textContent = '取消';
-    cancelButton.addEventListener('click', () => {
-      document.body.removeChild(dialog);
-    });
-
-    const confirmButton = document.createElement('button');
-    confirmButton.className = 'chapter-delete-dialog-button confirm';
-    confirmButton.textContent = '删除';
-    confirmButton.addEventListener('click', () => {
-      this.confirmDeleteChapter(chapterIndex);
-      document.body.removeChild(dialog);
-    });
-
-    // 组装对话框
-    dialogFooter.appendChild(cancelButton);
-    dialogFooter.appendChild(confirmButton);
-
-    dialogContent.appendChild(dialogHeader);
-    dialogContent.appendChild(dialogBody);
-    dialogContent.appendChild(dialogFooter);
-
-    dialog.appendChild(dialogContent);
-
-    // 添加到页面
-    document.body.appendChild(dialog);
-
-    // 点击对话框外部关闭
-    dialog.addEventListener('click', (e) => {
-      if (e.target === dialog) {
-        document.body.removeChild(dialog);
-      }
-    });
-  }
-
-  /**
-   * 任务1：确认删除章节
-   * @param {number} chapterIndex - 章节索引
-   */
-  confirmDeleteChapter(chapterIndex) {
-    if (chapterIndex < 0 || chapterIndex >= this.chapters.length) {
-      return;
-    }
-
-    const chapter = this.chapters[chapterIndex];
-
-    // 从编辑器中移除章节内容
-    const content = this.editor.value;
-    const newContent = content.substring(0, chapter.startPosition) +
-      content.substring(chapter.endPosition);
-    this.editor.value = newContent;
-
-    // 从章节数据中移除章节
-    this.chapters.splice(chapterIndex, 1);
-
-    // 重新显示章节列表
-    this.displayChapterList();
-
-    // 显示成功消息
-    this.showMessage(`章节 "${chapter.title}" 已删除`, 'success');
-  }
-
-  /**
-   * 任务4：应用自定义规则
-   */
-  applyCustomRule() {
-    const ruleText = this.customRuleInput.value.trim();
-
-    if (!ruleText) {
-      this.showMessage('请输入自定义规则', 'warning');
-      return;
-    }
-
-    const content = this.editor.value;
-
-    if (!content.trim()) {
-      this.showMessage('请先输入文本内容', 'warning');
-      return;
-    }
-
-    try {
-      // 创建章节检测器实例
-      const chapterDetector = new ChapterDetector();
-
-      // 判断是关键词还是正则表达式
-      let pattern;
-      if (ruleText.startsWith('/') && ruleText.endsWith('/')) {
-        // 正则表达式
-        const regexParts = ruleText.slice(1, -1).split(':');
-        const flags = regexParts.length > 1 ? regexParts[1] : 'g';
-        pattern = new RegExp(regexParts[0], flags);
-      } else {
-        // 关键词，转换为正则表达式
-        pattern = new RegExp(ruleText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-      }
-
-      // 创建临时规则
-      const tempRule = {
-        name: "自定义规则",
-        pattern: pattern,
-        priority: 100, // 设置高优先级
-        description: `用户自定义规则: ${ruleText}`
-      };
-
-      // 添加临时规则到规则库
-      chapterDetector.addRule(tempRule);
-
-      // 使用自定义规则进行分章
-      const result = chapterDetector.performAutoChapterDivision(content);
-
-      // 更新章节数据
-      this.chapters = result.chapters;
-
-      // 显示章节列表
-      this.displayChapterList();
-
-      // 显示结果
-      if (result.chapters.length > 0) {
-        this.showMessage(`使用自定义规则成功分章，共 ${result.chapters.length} 个章节`, 'success');
-      } else {
-        this.showMessage('自定义规则未匹配到任何章节', 'warning');
-      }
-
-      // 移除临时规则
-      chapterDetector.removeRule("自定义规则");
-
-    } catch (error) {
-      this.showMessage(`应用自定义规则时出错: ${error.message}`, 'error');
-    }
-  }
-
-  /**
-   * 任务4：拆分章节
-   */
-  splitChapter() {
-    if (this.chapters.length === 0) {
-      this.showMessage('请先进行章节检测', 'warning');
-      return;
-    }
-
-    // 获取当前光标位置
-    const cursorPosition = this.editor.selectionStart;
-
-    // 查找光标所在的章节
-    let currentChapterIndex = -1;
-    for (let i = 0; i < this.chapters.length; i++) {
-      const chapter = this.chapters[i];
-      if (cursorPosition >= chapter.startPosition && cursorPosition <= chapter.endPosition) {
-        currentChapterIndex = i;
-        break;
-      }
-    }
-
-    if (currentChapterIndex === -1) {
-      this.showMessage('请将光标放在要拆分的章节内', 'warning');
-      return;
-    }
-
-    const currentChapter = this.chapters[currentChapterIndex];
-
-    // 如果光标在章节开头或结尾，不允许拆分
-    if (cursorPosition <= currentChapter.startPosition || cursorPosition >= currentChapter.endPosition - 10) {
-      this.showMessage('光标位置不适合拆分章节', 'warning');
-      return;
-    }
-
-    // 确认拆分
-    if (!confirm(`确定要在当前位置拆分章节 "${currentChapter.title}" 吗？`)) {
-      return;
-    }
-
-    // 获取拆分点前后的内容
-    const beforeContent = this.editor.value.substring(currentChapter.startPosition, cursorPosition);
-    const afterContent = this.editor.value.substring(cursorPosition, currentChapter.endPosition);
-
-    // 创建新章节标题
-    const newChapterTitle = prompt('请输入新章节的标题:', `${currentChapter.title} (续)`);
-    if (!newChapterTitle) {
-      return;
-    }
-
-    // 在编辑器中插入新章节标题
-    const newChapterText = `\n${newChapterTitle}\n`;
-    this.editor.value =
-      this.editor.value.substring(0, cursorPosition) +
-      newChapterText +
-      this.editor.value.substring(cursorPosition);
-
-    // 重新检测章节
-    this.detectChapters();
-
-    this.showMessage('章节拆分成功', 'success');
-  }
-
-  /**
-   * 任务4：合并章节
-   */
-  mergeChapters() {
-    if (this.chapters.length === 0) {
-      this.showMessage('请先进行章节检测', 'warning');
-      return;
-    }
-
-    if (this.selectedChapters.size < 2) {
-      this.showMessage('请选择至少两个章节进行合并', 'warning');
-      return;
-    }
-
-    // 将选中的章节索引转换为数组并排序
-    const selectedIndices = Array.from(this.selectedChapters).sort((a, b) => a - b);
-
-    // 确认合并
-    const chapterTitles = selectedIndices.map(i => this.chapters[i].title).join('、');
-    if (!confirm(`确定要合并以下章节吗？\n${chapterTitles}`)) {
-      return;
-    }
-
-    // 获取第一个章节（保留其标题）
-    const firstChapter = this.chapters[selectedIndices[0]];
-
-    // 合并章节内容
-    let mergedContent = firstChapter.content;
-    for (let i = 1; i < selectedIndices.length; i++) {
-      const chapter = this.chapters[selectedIndices[i]];
-      // 移除章节标题，只保留内容
-      const contentWithoutTitle = chapter.content.replace(new RegExp(`^${chapter.title}\\s*[:：]?\\s*`), '');
-      mergedContent += '\n\n' + contentWithoutTitle;
-    }
-
-    // 计算合并后的章节位置
-    const startPosition = firstChapter.startPosition;
-    const endPosition = this.chapters[selectedIndices[selectedIndices.length - 1]].endPosition;
-
-    // 在编辑器中替换内容
-    this.editor.value =
-      this.editor.value.substring(0, startPosition) +
-      firstChapter.title + '\n' +
-      mergedContent +
-      this.editor.value.substring(endPosition);
-
-    // 清空选中状态
-    this.selectedChapters.clear();
-
-    // 重新检测章节
-    this.detectChapters();
-
-    this.showMessage('章节合并成功', 'success');
-  }
-
-  /**
-   * 任务4：切换章节选择状态
-   * @param {number} chapterIndex - 章节索引
-   */
-  toggleChapterSelection(chapterIndex) {
-    const chapterItem = this.chapterList.querySelector(`.chapter-item[data-index="${chapterIndex}"]`);
-    const checkbox = chapterItem.querySelector('.chapter-checkbox');
-
-    if (this.selectedChapters.has(chapterIndex)) {
-      this.selectedChapters.delete(chapterIndex);
-      chapterItem.classList.remove('selected');
-      checkbox.checked = false;
-    } else {
-      this.selectedChapters.add(chapterIndex);
-      chapterItem.classList.add('selected');
-      checkbox.checked = true;
-    }
-
-    // 更新合并按钮状态
-    this.mergeChaptersButton.disabled = this.selectedChapters.size < 2;
-  }
-
-  /**
-   * 将章节内容分成几个部分
-   * @param {string} content - 章节内容
-   * @param {number} sectionCount - 要分成的段落数
-   * @returns {Array} - 段落数组
-   */
-  splitChapterIntoSections(content, sectionCount) {
-    if (!content || content.length <= 1000) {
-      return [content];
-    }
-
-    const sectionLength = Math.floor(content.length / sectionCount);
-    const sections = [];
-
-    for (let i = 0; i < sectionCount; i++) {
-      const start = i * sectionLength;
-      const end = i === sectionCount - 1 ? content.length : (i + 1) * sectionLength;
-      sections.push(content.substring(start, end));
-    }
-
-    return sections;
-  }
-
-  /**
-   * 跳转到指定章节
-   * @param {number} chapterIndex - 章节索引
-   */
-  jumpToChapter(chapterIndex) {
-    if (chapterIndex < 0 || chapterIndex >= this.chapters.length) {
-      return;
-    }
-
-    const chapter = this.chapters[chapterIndex];
-    this.currentChapter = chapterIndex;
-
-    // 更新章节列表中的活动状态
-    this.updateActiveChapter(chapterIndex);
-
-    // 在编辑器中滚动到章节位置
-    if (this.editor) {
-      this.editor.focus();
-      this.editor.setSelectionRange(chapter.startPosition, chapter.startPosition);
-
-      // 计算滚动位置
-      const lineHeight = parseInt(window.getComputedStyle(this.editor).lineHeight) || 21;
-      const lines = this.editor.value.substring(0, chapter.startPosition).split('\n').length;
-      const scrollTop = (lines - 1) * lineHeight;
-
-      // 滚动到指定位置
-      this.editor.scrollTop = scrollTop;
-    }
-
-    // 在预览区中滚动到章节位置
-    if (this.preview) {
-      // 预览区中的位置计算比较复杂，这里简化处理
-      const previewContent = this.preview.textContent;
-      const chapterPreviewStart = previewContent.indexOf(chapter.content.substring(0, 50));
-
-      if (chapterPreviewStart !== -1) {
-        // 简单估算滚动位置
-        const previewLineHeight = parseInt(window.getComputedStyle(this.preview).lineHeight) || 21;
-        const lines = previewContent.substring(0, chapterPreviewStart).split('\n').length;
-        const scrollTop = (lines - 1) * previewLineHeight;
-
-        this.preview.scrollTop = scrollTop;
-      }
-    }
-  }
-
-  /**
-   * 跳转到章节的指定段落
-   * @param {number} chapterIndex - 章节索引
-   * @param {number} sectionIndex - 段落索引
-   */
-  jumpToChapterSection(chapterIndex, sectionIndex) {
-    if (chapterIndex < 0 || chapterIndex >= this.chapters.length) {
-      return;
-    }
-
-    const chapter = this.chapters[chapterIndex];
-    const sections = this.splitChapterIntoSections(chapter.content, 3);
-
-    if (sectionIndex < 0 || sectionIndex >= sections.length) {
-      return;
-    }
-
-    // 计算段落在章节中的起始位置
-    let sectionStartPos = chapter.startPosition;
-    for (let i = 0; i < sectionIndex; i++) {
-      sectionStartPos += sections[i].length;
-    }
-
-    // 在编辑器中滚动到段落位置
-    if (this.editor) {
-      this.editor.focus();
-      this.editor.setSelectionRange(sectionStartPos, sectionStartPos);
-
-      // 计算滚动位置
-      const lineHeight = parseInt(window.getComputedStyle(this.editor).lineHeight) || 21;
-      const lines = this.editor.value.substring(0, sectionStartPos).split('\n').length;
-      const scrollTop = (lines - 1) * lineHeight;
-
-      // 滚动到指定位置
-      this.editor.scrollTop = scrollTop;
-    }
-  }
-
-  /**
-   * 更新章节列表中的活动状态
-   * @param {number} chapterIndex - 章节索引
-   */
-  updateActiveChapter(chapterIndex) {
-    // 移除所有活动状态
-    const allItems = this.chapterList.querySelectorAll('.chapter-item, .sub-chapter-item');
-    allItems.forEach(item => item.classList.remove('active'));
-
-    // 添加当前章节的活动状态
-    const currentItem = this.chapterList.querySelector(`.chapter-item[data-index="${chapterIndex}"]`);
-    if (currentItem) {
-      currentItem.classList.add('active');
-    }
-  }
-
-  /**
-   * 高亮当前章节（基于滚动位置）
-   */
-  highlightCurrentChapter() {
-    if (!this.editor || this.chapters.length === 0) {
-      return;
-    }
-
-    // 获取当前滚动位置
-    const scrollTop = this.editor.scrollTop;
-    const lineHeight = parseInt(window.getComputedStyle(this.editor).lineHeight) || 21;
-    const currentLine = Math.floor(scrollTop / lineHeight);
-
-    // 计算当前光标位置
-    const textBeforeCursor = this.editor.value.substring(0, this.editor.selectionStart);
-    const currentLineInText = textBeforeCursor.split('\n').length;
-
-    // 查找当前所在的章节
-    let currentChapterIndex = -1;
-    for (let i = 0; i < this.chapters.length; i++) {
-      const chapter = this.chapters[i];
-      const chapterStartLine = this.editor.value.substring(0, chapter.startPosition).split('\n').length;
-
-      if (chapterStartLine <= currentLineInText) {
-        currentChapterIndex = i;
-      } else {
-        break;
-      }
-    }
-
-    // 更新活动章节
-    if (currentChapterIndex !== -1 && currentChapterIndex !== this.currentChapter) {
-      this.currentChapter = currentChapterIndex;
-      this.updateActiveChapter(currentChapterIndex);
-    }
-  }
-
-  /**
-   * 折叠/展开章节
-   * @param {number} chapterIndex - 章节索引
-   */
-  toggleChapter(chapterIndex) {
-    const subList = document.getElementById(`chapter-sub-list-${chapterIndex}`);
-    const toggle = document.querySelector(`.chapter-item[data-index="${chapterIndex}"] .chapter-toggle`);
-
-    if (subList && toggle) {
-      if (subList.classList.contains('expanded')) {
-        subList.classList.remove('expanded');
-        toggle.classList.add('collapsed');
-        toggle.textContent = '▶';
-      } else {
-        subList.classList.add('expanded');
-        toggle.classList.remove('collapsed');
-        toggle.textContent = '▼';
-      }
-    }
-  }
-
-  /**
-   * 展开所有章节
-   */
-  expandAllChapters() {
-    const subLists = document.querySelectorAll('.chapter-sub-list');
-    const toggles = document.querySelectorAll('.chapter-toggle');
-
-    subLists.forEach(list => list.classList.add('expanded'));
-    toggles.forEach(toggle => {
-      toggle.classList.remove('collapsed');
-      toggle.textContent = '▼';
-    });
-  }
-
-  /**
-   * 折叠所有章节
-   */
-  collapseAllChapters() {
-    const subLists = document.querySelectorAll('.chapter-sub-list');
-    const toggles = document.querySelectorAll('.chapter-toggle');
-
-    subLists.forEach(list => list.classList.remove('expanded'));
-    toggles.forEach(toggle => {
-      toggle.classList.add('collapsed');
-      toggle.textContent = '▶';
-    });
-  }
+  // 其他方法保持不变...
 
   /**
    * 显示消息

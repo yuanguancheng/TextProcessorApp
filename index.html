@@ -113,54 +113,58 @@
             </div>
           </div>
 
-          <!-- 中间编辑区 -->
-          <div class="editor-pane" id="editorPane">
-            <div class="editor-toolbar">
-              <div class="toolbar-group">
-                <button class="toolbar-button" id="undoButton" title="撤销">↶</button>
-                <button class="toolbar-button" id="redoButton" title="重做">↷</button>
-              </div>
-              <div class="toolbar-group">
-                <button class="toolbar-button" id="findButton" title="查找">🔍</button>
-                <button class="toolbar-button" id="replaceButton" title="替换">⇄</button>
-              </div>
-              <div class="toolbar-group">
-                <button class="toolbar-button" id="chapterDetectButton" title="章节检测">📖</button>
-              </div>
+          <!-- 在index.html文件中，找到编辑器工具栏的部分，添加以下内容 -->
+          <div class="editor-toolbar">
+            <div class="toolbar-group">
+              <button class="toolbar-button" id="undoButton" title="撤销">↶</button>
+              <button class="toolbar-button" id="redoButton" title="重做">↷</button>
             </div>
-            <div class="editor-content">
-              <textarea id="textEditor" placeholder="在此编辑文本内容..."></textarea>
+            <div class="toolbar-group">
+              <button class="toolbar-button" id="findButton" title="查找">🔍</button>
+              <button class="toolbar-button" id="replaceButton" title="替换">⇄</button>
+            </div>
+            <div class="toolbar-group">
+              <button class="toolbar-button" id="chapterDetectButton" title="章节检测">📖</button>
+            </div>
+            <!-- 任务2：内容优化工具 -->
+            <div class="toolbar-group">
+              <button class="toolbar-button" id="removeEmptyLinesButton" title="去空行">📝</button>
+              <button class="toolbar-button" id="optimizeIndentButton" title="缩进优化">↹</button>
             </div>
           </div>
-
-          <!-- 右侧预览区 -->
-          <div class="preview-pane" id="previewPane">
-            <div class="preview-header">
-              <h3>全文预览</h3>
-              <div class="preview-controls">
-                <button class="preview-button" id="zoomInButton">放大</button>
-                <button class="preview-button" id="zoomOutButton">缩小</button>
-                <button class="preview-button" id="resetZoomButton">重置</button>
-              </div>
-            </div>
-            <div class="preview-content" id="previewContent">
-              <div class="preview-text" id="previewText"></div>
-            </div>
+          <div class="editor-content">
+            <textarea id="textEditor" placeholder="在此编辑文本内容..."></textarea>
           </div>
         </div>
 
-        <!-- 底部状态栏 -->
-        <div class="status-bar">
-          <div class="status-left">
-            <span id="encodingInfo"></span>
-            <span id="lineInfo"></span>
+        <!-- 右侧预览区 -->
+        <div class="preview-pane" id="previewPane">
+          <div class="preview-header">
+            <h3>全文预览</h3>
+            <div class="preview-controls">
+              <button class="preview-button" id="zoomInButton">放大</button>
+              <button class="preview-button" id="zoomOutButton">缩小</button>
+              <button class="preview-button" id="resetZoomButton">重置</button>
+            </div>
           </div>
-          <div class="status-right">
-            <span id="wordCount"></span>
+          <div class="preview-content" id="previewContent">
+            <div class="preview-text" id="previewText"></div>
           </div>
         </div>
-      </section>
-    </main>
+  </div>
+
+  <!-- 底部状态栏 -->
+  <div class="status-bar">
+    <div class="status-left">
+      <span id="encodingInfo"></span>
+      <span id="lineInfo"></span>
+    </div>
+    <div class="status-right">
+      <span id="wordCount"></span>
+    </div>
+  </div>
+  </section>
+  </main>
   </div>
 
   <!-- 查找替换对话框 -->

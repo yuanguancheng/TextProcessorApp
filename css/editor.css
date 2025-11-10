@@ -758,3 +758,104 @@
     font-size: 12px;
   }
 }
+
+/* 在editor.css文件末尾添加以下代码 */
+
+/* 任务2：内容优化工具样式 */
+.content-optimization-tools {
+  padding: 10px 15px;
+  border-bottom: 1px solid #ddd;
+  background-color: #f5f5f5;
+}
+
+.tool-section {
+  margin-bottom: 10px;
+}
+
+.tool-section:last-child {
+  margin-bottom: 0;
+}
+
+.tool-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.tool-options {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tool-option {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tool-option label {
+  font-size: 12px;
+  color: #666;
+}
+
+.tool-option input[type="checkbox"] {
+  margin: 0;
+}
+
+/* 章节字数统计样式 */
+.chapter-word-count {
+  font-size: 11px;
+  color: #666;
+  margin-left: 5px;
+}
+
+/* 状态栏字数统计样式 */
+.word-count-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.word-count-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.word-count-label {
+  font-size: 11px;
+  color: #666;
+}
+
+.word-count-value {
+  font-weight: bold;
+  font-size: 11px;
+  color: #333;
+}
+
+/* 缩进优化预览 */
+.indent-preview {
+  margin-top: 5px;
+  padding: 5px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+/* 响应式设计调整 */
+@media (max-width: 768px) {
+  .content-optimization-tools {
+    padding: 8px 10px;
+  }
+
+  .tool-options {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
