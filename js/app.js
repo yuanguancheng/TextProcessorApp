@@ -152,4 +152,204 @@ document.addEventListener('DOMContentLoaded', async () => {
       compatibilityResults.innerHTML = html;
     });
   }
+
+  // 添加优化迭代按钮事件监听
+  const runOptimizationButton = document.getElementById('runOptimizationButton');
+  if (runOptimizationButton) {
+    runOptimizationButton.addEventListener('click', async () => {
+      const optimizationResults = document.getElementById('optimizationResults');
+      optimizationResults.innerHTML = '<p>正在运行优化分析...</p>';
+      
+      // 创建优化引擎
+      const optimizationEngine = new OptimizationEngine();
+      
+      // 模拟测试结果（实际应用中应该从真实测试中获取）
+      const mockTestResults = {
+        chapterAccuracy: {
+          accuracy: 0.65, // 65%准确率，低于阈值
+          unmatchedFormats: [
+            { pattern: '卷一', count: 5 },
+            { pattern: '第一篇', count: 3 },
+            { pattern: '第一部', count: 2 }
+          ],
+          falsePositives: [
+            { title: '第一章：引言', reason: '误匹配' }
+          ]
+        },
+        performance: {
+          largeFileProcessingTime: 4500, // 4.5秒，超过阈值
+          fileSize: 15 * 1024 * 1024, // 15MB
+          memoryUsage: 120, // 120MB，超过阈值
+          domUpdateFrequency: 15 // 15次/秒，超过阈值
+        },
+        userFeedback: {
+          score: 3.5, // 满分5分
+          complaints: [
+            { type: 'chapterDetection', description: '分章不准确' },
+            { type: 'performance', description: '大文件处理慢' }
+          ]
+        }
+      };
+      
+      // 分析测试结果并生成优化建议
+      const optimizations = optimizationEngine.analyzeTestResults(mockTestResults);
+      
+      // 显示优化建议
+      let html = '<div class="optimization-report">';
+      
+      // 优化摘要
+      const totalOptimizations = 
+        (optimizations.chapterRules ? optimizations.chapterRules.length : 0) +
+        (optimizations.performance ? optimizations.performance.length : 0) +
+        (optimizations.userExperience ? optimizations.userExperience.length : 0);
+      
+      html += `<div class="optimization-summary">
+        <h4>优化建议摘要</h4>
+        <p><strong>发现优化点:</strong> ${totalOptimizations}个</p>
+        <p><strong>分章准确率:</strong> ${Math.round(mockTestResults.chapterAccuracy.accuracy * 100)}%</p>
+        <p><strong>大文件处理时间:</strong> ${mockTestResults.performance.largeFileProcessingTime}ms</p>
+        <p><strong>内存使用:</strong> ${mockTestResults.performance.memoryUsage}MB</p>
+        <p><strong>DOM更新频率:</strong> ${mockTestResults.performance.domUpdateFrequency}次/秒</p>
+      </div>`;
+      
+      // 分章规则优化
+      if (optimizations.chapterRules && optimizations.chapterRules.length > 0) {
+        html += '<div class="optimization-category"><h4>分章规则优化</h4>';
+        
+        for (const opt of optimizations.chapterRules) {
+          html += `<div class="optimization-item">
+            <h5>${opt.description}</h5>
+            <ul>`;
+          
+          for (const action of opt.actions) {
+            if (action.action === 'addRule') {
+              html += `<li>添加新规则: ${action.rule.name} - ${action.rule.description}</li>`;
+            } else if (action.action === 'adjustPriorities') {
+              html += `<li>调整规则优先级: ${action.reason}</li>`;
+            }
+          }
+          
+          html += '</ul></div>';
+        }
+        
+        html += '</div>';
+      }
+      
+      // 性能优化
+      if (optimizations.performance && optimizations.performance.length > 0) {
+        html += '<div class="optimization-category"><h4>性能优化</h4>';
+        
+        for (const opt of optimizations.performance) {
+          html += `<div class="optimization-item">
+            <h5>${opt.description}</h5>
+            <ul>`;
+          
+          for (const action of opt.actions) {
+            if (action.action === 'optimizeChunkSize') {
+              html += `<li>优化分片大小: ${action.reason}</li>`;
+              html += `<li>建议分片大小: ${action.suggestedChunkSize}字节</li>`;
+            } else if (action.action === 'batchDomUpdates') {
+              html += `<li>批量DOM更新: ${action.reason}</li>`;
+              if (action.suggestions) {
+                html += '<ul>';
+                for (const suggestion of action.suggestions) {
+                  html += `<li>${suggestion}</li>`;
+                }
+                html += '</ul>';
+              }
+            }
+          }
+          
+          html += '</ul></div>';
+        }
+        
+        html += '</div>';
+      }
+      
+      // 用户体验优化
+      if (optimizations.userExperience && optimizations.userExperience.length > 0) {
+        html += '<div class="optimization-category"><h4>用户体验优化</h4>';
+        
+        for (const opt of optimizations.userExperience) {
+          html += `<div class="optimization-item">
+            <h5>${opt.description}</h5>
+            <ul>`;
+          
+          for (const action of opt.actions) {
+            html += `<li>${action.reason}</li>`;
+          }
+          
+          html += '</ul></div>';
+        }
+        
+        html += '</div>';
+      }
+      
+      // 应用优化按钮
+      html += `<div class="optimization-actions">
+        <button id="applyOptimizationsButton" class="control-button">应用优化</button>
+        <button id="resetOptimizationsButton" class="control-button">重置优化</button>
+      </div>`;
+      
+      html += '</div>';
+      
+      optimizationResults.innerHTML = html;
+      
+      // 添加应用优化按钮事件监听
+      const applyOptimizationsButton = document.getElementById('applyOptimizationsButton');
+      if (applyOptimizationsButton) {
+        applyOptimizationsButton.addEventListener('click', () => {
+          // 应用优化到相应模块
+          const chapterDetector = new ChapterDetector();
+          const fileHandler = new FileHandler();
+          
+          const results = optimizationEngine.applyOptimizations(optimizations, {
+            addChapterRule: (rule) => chapterDetector.addChapterRule(rule),
+            adjustRulePriorities: (adjustments) => chapterDetector.adjustRulePriorities(adjustments),
+            setChunkSize: (size) => fileHandler.setChunkSize(size),
+            enableBatchDomUpdates: () => fileHandler.enableBatchDomUpdates()
+          });
+          
+          // 显示应用结果
+          let resultHtml = '<div class="optimization-results">';
+          resultHtml += `<h4>优化应用结果</h4>`;
+          resultHtml += `<p><strong>总计:</strong> ${results.summary.total}个优化</p>`;
+          resultHtml += `<p><strong>成功:</strong> ${results.summary.successful}个</p>`;
+          resultHtml += `<p><strong>失败:</strong> ${results.summary.failed}个</p>`;
+          
+          if (results.applied.length > 0) {
+            resultHtml += '<h5>已应用的优化:</h5><ul>';
+            for (const applied of results.applied) {
+              resultHtml += `<li>${applied.description}</li>`;
+            }
+            resultHtml += '</ul>';
+          }
+          
+          if (results.failed.length > 0) {
+            resultHtml += '<h5>失败的优化:</h5><ul>';
+            for (const failed of results.failed) {
+              resultHtml += `<li>${failed.reason}</li>`;
+            }
+            resultHtml += '</ul>';
+          }
+          
+          resultHtml += '</div>';
+          
+          // 在优化结果区域显示应用结果
+          const resultDiv = document.createElement('div');
+          resultDiv.innerHTML = resultHtml;
+          optimizationResults.appendChild(resultDiv);
+        });
+      }
+      
+      // 添加重置优化按钮事件监听
+      const resetOptimizationsButton = document.getElementById('resetOptimizationsButton');
+      if (resetOptimizationsButton) {
+        resetOptimizationsButton.addEventListener('click', () => {
+          optimizationEngine.reset();
+          optimizationResults.innerHTML = '<p>优化引擎已重置</p>';
+        });
+      }
+    });
+  }
 });

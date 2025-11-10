@@ -1566,3 +1566,68 @@
 .recommendation p {
   margin-bottom: 0;
 }
+
+/* 优化迭代样式 */
+.optimization-report {
+  margin-top: 15px;
+}
+
+.optimization-summary, .optimization-category {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+.optimization-summary h4, .optimization-category h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.optimization-item {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-left: 3px solid #2196f3;
+  background-color: #f8f9fa;
+}
+
+.optimization-item h5 {
+  margin-top: 0;
+  margin-bottom: 5px;
+  color: #2196f3;
+}
+
+.optimization-item ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.optimization-item li {
+  margin-bottom: 5px;
+}
+
+.optimization-actions {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.optimization-actions button {
+  margin: 0 10px;
+}
+
+.optimization-results {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  background-color: #f1f8e9;
+}
+
+.optimization-results h4 {
+  margin-top: 0;
+  color: #2e7d32;
+}

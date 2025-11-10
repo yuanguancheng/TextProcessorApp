@@ -633,6 +633,143 @@ class ChapterDetector {
       formatAnalysis
     };
   }
+
+  /**
+   * 添加新的章节规则
+   * @param {Object} rule - 章节规则对象
+   */
+  addChapterRule(rule) {
+    // 验证规则对象
+    if (!rule.name || !rule.pattern || typeof rule.priority !== 'number') {
+      throw new Error('无效的章节规则：必须包含name、pattern和priority属性');
+    }
+
+    // 检查规则是否已存在
+    const existingRuleIndex = this.chapterRules.findIndex(r => r.name === rule.name);
+    if (existingRuleIndex !== -1) {
+      // 更新现有规则
+      this.chapterRules[existingRuleIndex] = { ...rule };
+      console.log(`章节规则"${rule.name}"已更新`);
+    } else {
+      // 添加新规则
+      this.chapterRules.push({ ...rule });
+      console.log(`章节规则"${rule.name}"已添加`);
+    }
+
+    // 按优先级重新排序
+    this.chapterRules.sort((a, b) => b.priority - a.priority);
+  }
+
+  /**
+   * 调整规则优先级
+   * @param {Array} adjustments - 优先级调整数组
+   */
+  adjustRulePriorities(adjustments) {
+    for (const adjustment of adjustments) {
+      const { ruleName, newPriority } = adjustment;
+      const rule = this.chapterRules.find(r => r.name === ruleName);
+      
+      if (rule) {
+        rule.priority = newPriority;
+        console.log(`规则"${ruleName}"的优先级已调整为${newPriority}`);
+      } else {
+        console.warn(`未找到名为"${ruleName}"的规则`);
+      }
+    }
+
+    // 按优先级重新排序
+    this.chapterRules.sort((a, b) => b.priority - a.priority);
+  }
+
+  /**
+   * 移除章节规则
+   * @param {string} ruleName - 规则名称
+   * @returns {boolean} - 是否成功移除
+   */
+  removeChapterRule(ruleName) {
+    const index = this.chapterRules.findIndex(r => r.name === ruleName);
+    if (index !== -1) {
+      this.chapterRules.splice(index, 1);
+      console.log(`章节规则"${ruleName}"已移除`);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * 获取所有章节规则
+   * @returns {Array} - 章节规则数组
+   */
+  getChapterRules() {
+    return [...this.chapterRules];
+  }
+
+  /**
+   * 分析分章准确率
+   * @param {string} content - 文本内容
+   * @param {Array} expectedChapters - 期望的章节数组
+   * @returns {Object} - 准确率分析结果
+   */
+  analyzeChapterAccuracy(content, expectedChapters) {
+    const detectedChapters = this.detectChapters(content);
+    
+    // 计算准确率
+    let matchedCount = 0;
+    const unmatchedFormats = [];
+    const falsePositives = [];
+    
+    // 检查检测到的章节是否匹配期望
+    for (const detected of detectedChapters) {
+      const matched = expectedChapters.find(expected => 
+        expected.title === detected.title || 
+        expected.content.includes(detected.title)
+      );
+      
+      if (matched) {
+        matchedCount++;
+      } else {
+        falsePositives.push(detected);
+      }
+    }
+    
+    // 检查期望的章节是否被检测到
+    for (const expected of expectedChapters) {
+      const matched = detectedChapters.find(detected => 
+        detected.title === expected.title || 
+        detected.content.includes(expected.title)
+      );
+      
+      if (!matched) {
+        // 尝试从未匹配的标题中提取格式
+        const formatMatch = expected.title.match(/第[一二三四五六七八九十百千万零\d]+[章卷节篇部回集幕场折]/);
+        if (formatMatch) {
+          const format = formatMatch[0];
+          const existingFormat = unmatchedFormats.find(f => f.pattern === format);
+          
+          if (existingFormat) {
+            existingFormat.count++;
+          } else {
+            unmatchedFormats.push({
+              pattern: format,
+              count: 1,
+              example: expected.title
+            });
+          }
+        }
+      }
+    }
+    
+    const accuracy = expectedChapters.length > 0 ? matchedCount / expectedChapters.length : 0;
+    
+    return {
+      accuracy,
+      matchedCount,
+      totalCount: expectedChapters.length,
+      detectedCount: detectedChapters.length,
+      unmatchedFormats,
+      falsePositives
+    };
+  }
 }
 
 // 导出模块

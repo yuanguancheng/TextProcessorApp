@@ -492,6 +492,144 @@ class FileHandler {
     
     return true;
   }
+
+  /**
+   * 设置分片大小
+   * @param {number} newChunkSize - 新的分片大小（字节）
+   */
+  setChunkSize(newChunkSize) {
+    if (typeof newChunkSize !== 'number' || newChunkSize <= 0) {
+      throw new Error('分片大小必须是正数');
+    }
+    
+    this.chunkSize = newChunkSize;
+    console.log(`文件分片大小已设置为 ${this.formatFileSize(newChunkSize)}`);
+  }
+
+  /**
+   * 启用批量DOM更新
+   */
+  enableBatchDomUpdates() {
+    this.batchDomUpdates = true;
+    this.pendingDomUpdates = [];
+    this.domUpdateScheduled = false;
+    console.log('已启用批量DOM更新');
+  }
+
+  /**
+   * 批量处理DOM更新
+   * @param {Function} updateFunction - 更新函数
+   */
+  batchUpdate(updateFunction) {
+    if (!this.batchDomUpdates) {
+      // 如果未启用批量更新，直接执行
+      updateFunction();
+      return;
+    }
+
+    // 将更新函数添加到待处理队列
+    this.pendingDomUpdates.push(updateFunction);
+
+    // 如果尚未安排更新，则安排一个
+    if (!this.domUpdateScheduled) {
+      this.domUpdateScheduled = true;
+      requestAnimationFrame(() => {
+        // 执行所有待处理的更新
+        for (const update of this.pendingDomUpdates) {
+          update();
+        }
+        
+        // 重置状态
+        this.pendingDomUpdates = [];
+        this.domUpdateScheduled = false;
+      });
+    }
+  }
+
+  /**
+   * 优化大文件处理性能
+   * @param {number} fileSize - 文件大小（字节）
+   * @returns {Object} - 性能优化建议
+   */
+  optimizeLargeFileProcessing(fileSize) {
+    const recommendations = {
+      chunkSize: this.chunkSize,
+      batchDomUpdates: this.batchDomUpdates || false,
+      memoryOptimization: false,
+      virtualScrolling: false
+    };
+
+    // 根据文件大小调整分片大小
+    if (fileSize > 10 * 1024 * 1024) { // 10MB以上
+      recommendations.chunkSize = 2 * 1024 * 1024; // 2MB
+      recommendations.batchDomUpdates = true;
+      recommendations.memoryOptimization = true;
+    } else if (fileSize > 5 * 1024 * 1024) { // 5MB以上
+      recommendations.chunkSize = 1 * 1024 * 1024; // 1MB
+      recommendations.batchDomUpdates = true;
+    }
+
+    // 超大文件建议使用虚拟滚动
+    if (fileSize > 50 * 1024 * 1024) { // 50MB以上
+      recommendations.virtualScrolling = true;
+    }
+
+    return recommendations;
+  }
+
+  /**
+   * 应用性能优化
+   * @param {Object} optimizations - 优化建议
+   */
+  applyPerformanceOptimizations(optimizations) {
+    if (optimizations.chunkSize && optimizations.chunkSize !== this.chunkSize) {
+      this.setChunkSize(optimizations.chunkSize);
+    }
+
+    if (optimizations.batchDomUpdates && !this.batchDomUpdates) {
+      this.enableBatchDomUpdates();
+    }
+
+    if (optimizations.memoryOptimization) {
+      this.enableMemoryOptimization();
+    }
+
+    if (optimizations.virtualScrolling) {
+      this.enableVirtualScrolling();
+    }
+  }
+
+  /**
+   * 启用内存优化
+   */
+  enableMemoryOptimization() {
+    this.memoryOptimization = true;
+    console.log('已启用内存优化');
+  }
+
+  /**
+   * 启用虚拟滚动
+   */
+  enableVirtualScrolling() {
+    this.virtualScrolling = true;
+    console.log('已启用虚拟滚动');
+  }
+
+  /**
+   * 获取性能指标
+   * @returns {Object} - 性能指标对象
+   */
+  getPerformanceMetrics() {
+    return {
+      chunkSize: this.chunkSize,
+      batchDomUpdates: this.batchDomUpdates || false,
+      memoryOptimization: this.memoryOptimization || false,
+      virtualScrolling: this.virtualScrolling || false,
+      processingTime: this.processingTime || 0,
+      memoryUsage: this.memoryUsage || 0,
+      domUpdateFrequency: this.domUpdateFrequency || 0
+    };
+  }
 }
 
 // 导出模块
