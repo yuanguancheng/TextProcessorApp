@@ -109,6 +109,12 @@ class TextEditor {
       this.autoSaveToggle.addEventListener('click', () => this.toggleAutoSave());
     }
 
+    // 任务4：导出功能事件监听
+    const exportTxtButton = document.getElementById('exportTxtButton');
+    if (exportTxtButton) {
+      exportTxtButton.addEventListener('click', () => this.exportToTxt());
+    }
+
     const backToDocumentsButton = document.getElementById('backToDocumentsButton');
     if (backToDocumentsButton) {
       backToDocumentsButton.addEventListener('click', () => this.backToDocuments());
@@ -234,6 +240,449 @@ class TextEditor {
         wordCountElement.textContent = `(${wordCount.toLocaleString()}字)`;
       }
     });
+  }
+
+  /**
+   * 任务4：合并选中的章节
+   */
+  mergeChapters() {
+    // 获取选中的章节索引
+    const selectedChapters = Array.from(this.selectedChapters);
+
+    // 验证至少选中2个章节
+    if (selectedChapters.length < 2) {
+      this.showMessage('请至少选择2个章节进行合并', 'warning');
+      return;
+    }
+
+    // 按索引排序选中的章节
+    selectedChapters.sort((a, b) => a - b);
+
+    // 确认合并操作
+    if (!confirm(`确定要合并选中的 ${selectedChapters.length} 个章节吗？合并后将保留第一个章节的标题。`)) {
+      return;
+    }
+
+    // 获取第一个章节的标题（将作为合并后的章节标题）
+    const firstChapterIndex = selectedChapters[0];
+    const mergedTitle = this.chapters[firstChapterIndex].title;
+
+    // 合并章节内容
+    let mergedContent = '';
+    const mergedChapters = [];
+
+    // 遍历所有章节，将选中的章节合并，未选中的章节保持不变
+    for (let i = 0; i < this.chapters.length; i++) {
+      if (selectedChapters.includes(i)) {
+        // 如果是选中的章节，合并内容
+        mergedContent += this.chapters[i].content;
+
+        // 如果是最后一个选中的章节，创建合并后的章节
+        if (i === selectedChapters[selectedChapters.length - 1]) {
+          mergedChapters.push({
+            title: mergedTitle,
+            content: mergedContent,
+            startPosition: this.chapters[firstChapterIndex].startPosition,
+            endPosition: this.chapters[i].endPosition
+          });
+        }
+      } else {
+        // 如果是未选中的章节，保持不变
+        mergedChapters.push(this.chapters[i]);
+      }
+    }
+
+    // 更新章节数据
+    this.chapters = mergedChapters;
+
+    // 清空选中状态
+    this.selectedChapters.clear();
+
+    // 更新编辑器内容
+    this.updateEditorContentFromChapters();
+
+    // 重新显示章节列表
+    this.displayChapterList();
+
+    // 更新字数统计
+    this.updateWordCount();
+
+    // 显示成功消息
+    this.showMessage(`成功合并 ${selectedChapters.length} 个章节`, 'success');
+  }
+
+  /**
+   * 切换章节选中状态
+   * @param {number} chapterIndex - 章节索引
+   */
+  toggleChapterSelection(chapterIndex) {
+    if (this.selectedChapters.has(chapterIndex)) {
+      this.selectedChapters.delete(chapterIndex);
+    } else {
+      this.selectedChapters.add(chapterIndex);
+    }
+
+    // 更新章节项的选中状态
+    const chapterItem = this.chapterList.querySelector(`.chapter-item[data-index="${chapterIndex}"]`);
+    if (chapterItem) {
+      const checkbox = chapterItem.querySelector('.chapter-checkbox');
+      if (checkbox) {
+        checkbox.checked = this.selectedChapters.has(chapterIndex);
+      }
+
+      // 添加/移除选中样式
+      if (this.selectedChapters.has(chapterIndex)) {
+        chapterItem.classList.add('selected');
+      } else {
+        chapterItem.classList.remove('selected');
+      }
+    }
+
+    // 更新合并按钮状态
+    this.updateMergeButtonState();
+  }
+
+  /**
+   * 更新合并按钮状态
+   */
+  updateMergeButtonState() {
+    if (this.mergeChaptersButton) {
+      if (this.selectedChapters.size >= 2) {
+        this.mergeChaptersButton.disabled = false;
+        this.mergeChaptersButton.title = `合并选中的 ${this.selectedChapters.size} 个章节`;
+      } else {
+        this.mergeChaptersButton.disabled = true;
+        this.mergeChaptersButton.title = '请至少选择2个章节进行合并';
+      }
+    }
+  }
+
+  /**
+   * 根据章节数据更新编辑器内容
+   */
+  updateEditorContentFromChapters() {
+    if (!this.editor) return;
+
+    // 将所有章节内容拼接起来
+    const fullContent = this.chapters.map(chapter => chapter.content).join('');
+
+    // 更新编辑器内容
+    this.editor.value = fullContent;
+
+    // 更新预览
+    this.updatePreview();
+  }
+
+  /**
+   * 开始编辑章节标题
+   * @param {number} index - 章节索引
+   */
+  startEditChapterTitle(index) {
+    // 如果正在编辑其他章节，先保存
+    if (this.editingChapter !== null && this.editingChapter !== index) {
+      this.saveChapterTitle(this.editingChapter);
+    }
+
+    this.editingChapter = index;
+
+    const titleElement = document.getElementById(`chapter-title-${index}`);
+    const titleInput = document.getElementById(`chapter-title-input-${index}`);
+    const chapterItem = this.chapterList.querySelector(`.chapter-item[data-index="${index}"]`);
+
+    if (titleElement && titleInput && chapterItem) {
+      // 隐藏标题显示，显示输入框
+      titleElement.style.display = 'none';
+      titleInput.style.display = 'inline-block';
+
+      // 设置输入框值
+      titleInput.value = this.chapters[index].title;
+
+      // 选中输入框内容
+      titleInput.focus();
+      titleInput.select();
+
+      // 添加编辑状态样式
+      chapterItem.classList.add('editing');
+    }
+  }
+
+  /**
+   * 保存章节标题
+   * @param {number} index - 章节索引
+   */
+  saveChapterTitle(index) {
+    const titleInput = document.getElementById(`chapter-title-input-${index}`);
+    const titleElement = document.getElementById(`chapter-title-${index}`);
+    const chapterItem = this.chapterList.querySelector(`.chapter-item[data-index="${index}"]`);
+
+    if (titleInput && titleElement && chapterItem) {
+      const newTitle = titleInput.value.trim();
+
+      if (newTitle) {
+        // 更新章节标题
+        this.chapters[index].title = newTitle;
+        titleElement.textContent = newTitle;
+
+        // 更新编辑器内容
+        this.updateEditorContentFromChapters();
+
+        this.showMessage('章节标题已更新', 'success');
+      }
+
+      // 恢复显示状态
+      titleElement.style.display = 'inline-block';
+      titleInput.style.display = 'none';
+
+      // 移除编辑状态样式
+      chapterItem.classList.remove('editing');
+
+      this.editingChapter = null;
+    }
+  }
+
+  /**
+   * 取消编辑章节标题
+   * @param {number} index - 章节索引
+   */
+  cancelEditChapterTitle(index) {
+    const titleElement = document.getElementById(`chapter-title-${index}`);
+    const titleInput = document.getElementById(`chapter-title-input-${index}`);
+    const chapterItem = this.chapterList.querySelector(`.chapter-item[data-index="${index}"]`);
+
+    if (titleElement && titleInput && chapterItem) {
+      // 恢复显示状态
+      titleElement.style.display = 'inline-block';
+      titleInput.style.display = 'none';
+
+      // 移除编辑状态样式
+      chapterItem.classList.remove('editing');
+
+      this.editingChapter = null;
+    }
+  }
+
+  /**
+   * 删除章节
+   * @param {number} index - 章节索引
+   */
+  deleteChapter(index) {
+    // 二次确认
+    if (!confirm(`确定要删除章节 "${this.chapters[index].title}" 吗？此操作不可恢复。`)) {
+      return;
+    }
+
+    // 从选中章节中移除
+    if (this.selectedChapters.has(index)) {
+      this.selectedChapters.delete(index);
+    }
+
+    // 删除章节
+    this.chapters.splice(index, 1);
+
+    // 更新编辑器内容
+    this.updateEditorContentFromChapters();
+
+    // 重新显示章节列表
+    this.displayChapterList();
+
+    // 更新字数统计
+    this.updateWordCount();
+
+    // 更新合并按钮状态
+    this.updateMergeButtonState();
+
+    this.showMessage('章节已删除', 'success');
+  }
+
+  /**
+   * 跳转到指定章节
+   * @param {number} index - 章节索引
+   */
+  jumpToChapter(index) {
+    if (index < 0 || index >= this.chapters.length) {
+      return;
+    }
+
+    this.currentChapter = index;
+
+    // 更新章节选中状态
+    this.updateChapterSelection();
+
+    // 更新字数统计
+    this.updateWordCount();
+
+    // 滚动到章节位置（如果支持）
+    this.scrollToChapter(index);
+  }
+
+  /**
+   * 更新章节选中状态
+   */
+  updateChapterSelection() {
+    if (!this.chapterList) return;
+
+    // 移除所有选中状态
+    const allItems = this.chapterList.querySelectorAll('.chapter-item');
+    allItems.forEach(item => item.classList.remove('active'));
+
+    // 添加当前章节选中状态
+    if (this.currentChapter !== null) {
+      const currentItem = this.chapterList.querySelector(`.chapter-item[data-index="${this.currentChapter}"]`);
+      if (currentItem) {
+        currentItem.classList.add('active');
+      }
+    }
+  }
+
+  /**
+   * 滚动到指定章节
+   * @param {number} index - 章节索引
+   */
+  scrollToChapter(index) {
+    if (!this.editor || !this.chapters[index]) return;
+
+    const chapter = this.chapters[index];
+
+    // 计算章节在编辑器中的位置（简单实现）
+    const content = this.editor.value;
+    const position = chapter.startPosition || 0;
+
+    // 设置光标位置
+    this.editor.focus();
+    this.editor.setSelectionRange(position, position);
+
+    // 滚动到可见区域（简单实现）
+    const lineHeight = 20; // 估计的行高
+    const linesBefore = Math.floor(position / 80); // 估计每行80字符
+    const scrollTop = linesBefore * lineHeight;
+
+    this.editor.scrollTop = Math.max(0, scrollTop - 100); // 留出一些顶部空间
+  }
+
+  /**
+   * 切换章节折叠/展开状态
+   * @param {number} index - 章节索引
+   */
+  toggleChapter(index) {
+    const chapterItem = this.chapterList.querySelector(`.chapter-item[data-index="${index}"]`);
+    const subList = document.getElementById(`chapter-sub-list-${index}`);
+    const toggleButton = chapterItem.querySelector('.chapter-toggle');
+
+    if (chapterItem && subList && toggleButton) {
+      if (subList.style.display === 'none') {
+        // 展开章节
+        subList.style.display = 'block';
+        toggleButton.textContent = '▼';
+        chapterItem.classList.add('expanded');
+      } else {
+        // 折叠章节
+        subList.style.display = 'none';
+        toggleButton.textContent = '▶';
+        chapterItem.classList.remove('expanded');
+      }
+    }
+  }
+
+  /**
+   * 展开所有章节
+   */
+  expandAllChapters() {
+    const chapterItems = this.chapterList.querySelectorAll('.chapter-item');
+
+    chapterItems.forEach((item, index) => {
+      const subList = document.getElementById(`chapter-sub-list-${index}`);
+      const toggleButton = item.querySelector('.chapter-toggle');
+
+      if (subList && toggleButton) {
+        subList.style.display = 'block';
+        toggleButton.textContent = '▼';
+        item.classList.add('expanded');
+      }
+    });
+
+    this.showMessage('已展开所有章节', 'info');
+  }
+
+  /**
+   * 折叠所有章节
+   */
+  collapseAllChapters() {
+    const chapterItems = this.chapterList.querySelectorAll('.chapter-item');
+
+    chapterItems.forEach((item, index) => {
+      const subList = document.getElementById(`chapter-sub-list-${index}`);
+      const toggleButton = item.querySelector('.chapter-toggle');
+
+      if (subList && toggleButton) {
+        subList.style.display = 'none';
+        toggleButton.textContent = '▶';
+        item.classList.remove('expanded');
+      }
+    });
+
+    this.showMessage('已折叠所有章节', 'info');
+  }
+
+  /**
+   * 将章节内容分割为多个部分
+   * @param {string} content - 章节内容
+   * @param {number} maxSections - 最大分割数
+   * @returns {Array} - 分割后的部分数组
+   */
+  splitChapterIntoSections(content, maxSections = 3) {
+    if (!content || content.length === 0) {
+      return [];
+    }
+
+    const sections = [];
+    const sectionLength = Math.ceil(content.length / maxSections);
+
+    for (let i = 0; i < maxSections; i++) {
+      const start = i * sectionLength;
+      const end = Math.min((i + 1) * sectionLength, content.length);
+
+      if (start < content.length) {
+        sections.push(content.substring(start, end));
+      }
+    }
+
+    return sections;
+  }
+
+  /**
+   * 跳转到章节的指定段落
+   * @param {number} chapterIndex - 章节索引
+   * @param {number} sectionIndex - 段落索引
+   */
+  jumpToChapterSection(chapterIndex, sectionIndex) {
+    if (chapterIndex < 0 || chapterIndex >= this.chapters.length) {
+      return;
+    }
+
+    const chapter = this.chapters[chapterIndex];
+    const sections = this.splitChapterIntoSections(chapter.content, 3);
+
+    if (sectionIndex < 0 || sectionIndex >= sections.length) {
+      return;
+    }
+
+    // 计算段落在全文中的位置
+    const sectionStart = chapter.startPosition +
+      sections.slice(0, sectionIndex).reduce((sum, section) => sum + section.length, 0);
+
+    // 设置光标位置
+    if (this.editor) {
+      this.editor.focus();
+      this.editor.setSelectionRange(sectionStart, sectionStart);
+
+      // 滚动到可见区域
+      const lineHeight = 20;
+      const linesBefore = Math.floor(sectionStart / 80);
+      const scrollTop = linesBefore * lineHeight;
+      this.editor.scrollTop = Math.max(0, scrollTop - 100);
+    }
+
+    this.showMessage(`已跳转到第${chapterIndex + 1}章第${sectionIndex + 1}段`, 'info');
   }
 
   /**
@@ -553,7 +1002,7 @@ class TextEditor {
    */
   toggleAutoSave() {
     this.autoSaveEnabled = !this.autoSaveEnabled;
-    
+
     if (this.autoSaveEnabled) {
       this.startAutoSave();
       this.showMessage('自动保存已开启', 'success');
@@ -585,16 +1034,16 @@ class TextEditor {
    */
   async manualSave() {
     const documentData = this.getCurrentDocumentData();
-    
+
     if (!documentData.content || documentData.content.trim().length === 0) {
       this.showMessage('文档内容为空，无法保存', 'warning');
       return;
     }
 
     this.showMessage('正在保存文档...', 'info');
-    
+
     const result = await this.storageManager.saveDocument(documentData);
-    
+
     if (result.success) {
       this.currentDocument.id = result.documentId;
       this.showMessage('文档保存成功', 'success');
@@ -636,9 +1085,9 @@ class TextEditor {
 
     try {
       const documents = await this.storageManager.getAllDocuments();
-      
+
       documentTableBody.innerHTML = '';
-      
+
       if (documents.length === 0) {
         documentListLoading.style.display = 'none';
         documentListEmpty.style.display = 'block';
@@ -647,11 +1096,11 @@ class TextEditor {
 
       documents.forEach(doc => {
         const row = document.createElement('tr');
-        
+
         // 格式化时间
         const uploadTime = new Date(doc.uploadTime).toLocaleString('zh-CN');
         const lastEditTime = new Date(doc.lastEditTime).toLocaleString('zh-CN');
-        
+
         row.innerHTML = `
           <td class="document-name">${doc.fileName}</td>
           <td class="document-upload-time">${uploadTime}</td>
@@ -662,7 +1111,7 @@ class TextEditor {
             <button class="action-button delete-button" data-doc-id="${doc.id}">删除</button>
           </td>
         `;
-        
+
         documentTableBody.appendChild(row);
       });
 
@@ -683,7 +1132,7 @@ class TextEditor {
 
       documentListLoading.style.display = 'none';
       documentListContent.style.display = 'block';
-      
+
     } catch (error) {
       console.error('加载文档列表失败:', error);
       documentListLoading.style.display = 'none';
@@ -698,7 +1147,7 @@ class TextEditor {
   async loadDocument(documentId) {
     try {
       const document = await this.storageManager.getDocument(documentId);
-      
+
       if (!document) {
         this.showMessage('文档不存在', 'error');
         return;
@@ -706,7 +1155,7 @@ class TextEditor {
 
       // 更新当前文档信息
       this.currentDocument = { ...document };
-      
+
       // 设置编辑器内容
       if (this.editor) {
         this.editor.value = document.content || '';
@@ -714,10 +1163,10 @@ class TextEditor {
 
       // 设置章节数据
       this.chapters = document.chapters || [];
-      
+
       // 更新预览
       this.updatePreview();
-      
+
       // 显示章节列表（如果有章节）
       if (this.chapters.length > 0) {
         this.displayChapterList();
@@ -725,9 +1174,9 @@ class TextEditor {
 
       // 切换到编辑器界面
       this.showEditorSection();
-      
+
       this.showMessage(`已加载文档: ${document.fileName}`, 'success');
-      
+
     } catch (error) {
       console.error('加载文档失败:', error);
       this.showMessage('加载文档失败', 'error');
@@ -744,7 +1193,7 @@ class TextEditor {
 
     try {
       const success = await this.storageManager.deleteDocument(documentId);
-      
+
       if (success) {
         this.showMessage('文档删除成功', 'success');
         // 重新加载文档列表
@@ -752,7 +1201,7 @@ class TextEditor {
       } else {
         this.showMessage('文档删除失败', 'error');
       }
-      
+
     } catch (error) {
       console.error('删除文档失败:', error);
       this.showMessage('删除文档失败', 'error');
@@ -771,14 +1220,14 @@ class TextEditor {
       chapters: [],
       content: ''
     };
-    
+
     if (this.editor) {
       this.editor.value = '';
     }
-    
+
     this.chapters = [];
     this.updatePreview();
-    
+
     this.showEditorSection();
     this.showMessage('已创建新文档', 'success');
   }
@@ -789,7 +1238,7 @@ class TextEditor {
   showUploadSection() {
     const documentManagerSection = document.getElementById('documentManagerSection');
     const uploadSection = document.getElementById('uploadSection');
-    
+
     if (documentManagerSection && uploadSection) {
       documentManagerSection.style.display = 'none';
       uploadSection.style.display = 'block';
@@ -803,12 +1252,145 @@ class TextEditor {
     const documentManagerSection = document.getElementById('documentManagerSection');
     const uploadSection = document.getElementById('uploadSection');
     const editorSection = document.getElementById('editorSection');
-    
+
     if (documentManagerSection && uploadSection && editorSection) {
       documentManagerSection.style.display = 'none';
       uploadSection.style.display = 'none';
       editorSection.style.display = 'block';
     }
+  }
+
+  /**
+   * 任务4：导出TXT文件
+   */
+  exportToTxt() {
+    if (!this.editor || !this.editor.value.trim()) {
+      this.showMessage('文档内容为空，无法导出', 'warning');
+      return;
+    }
+
+    // 显示导出设置对话框
+    this.showExportSettingsDialog();
+  }
+
+  /**
+   * 显示导出设置对话框
+   */
+  showExportSettingsDialog() {
+    const exportSettingsDialog = document.getElementById('exportSettingsDialog');
+    const exportFileNameInput = document.getElementById('exportFileName');
+    const includeChapterNamesCheckbox = document.getElementById('includeChapterNames');
+    const preserveEmptyLinesCheckbox = document.getElementById('preserveEmptyLines');
+    const exportDialogClose = document.getElementById('exportDialogClose');
+    const cancelExportButton = document.getElementById('cancelExportButton');
+    const confirmExportButton = document.getElementById('confirmExportButton');
+
+    if (!exportSettingsDialog || !exportFileNameInput || !includeChapterNamesCheckbox ||
+      !preserveEmptyLinesCheckbox || !exportDialogClose || !cancelExportButton || !confirmExportButton) {
+      // 如果对话框元素不存在，使用默认设置直接导出
+      this.performExport('未命名文档.txt', true, true);
+      return;
+    }
+
+    // 设置默认文件名
+    const fileName = this.currentDocument.fileName || '未命名文档';
+    exportFileNameInput.value = fileName.endsWith('.txt') ? fileName : `${fileName}.txt`;
+
+    // 显示对话框
+    exportSettingsDialog.hidden = false;
+
+    // 添加事件监听
+    const closeDialog = () => {
+      exportSettingsDialog.hidden = true;
+    };
+
+    exportDialogClose.onclick = closeDialog;
+    cancelExportButton.onclick = closeDialog;
+
+    confirmExportButton.onclick = () => {
+      const fileName = exportFileNameInput.value.trim() || '未命名文档.txt';
+      const includeChapterNames = includeChapterNamesCheckbox.checked;
+      const preserveEmptyLines = preserveEmptyLinesCheckbox.checked;
+
+      closeDialog();
+      this.performExport(fileName, includeChapterNames, preserveEmptyLines);
+    };
+
+    // 点击对话框外部关闭
+    exportSettingsDialog.onclick = (e) => {
+      if (e.target === exportSettingsDialog) {
+        closeDialog();
+      }
+    };
+  }
+
+  /**
+   * 执行导出操作
+   * @param {string} fileName - 导出文件名
+   * @param {boolean} includeChapterNames - 是否包含章节名
+   * @param {boolean} preserveEmptyLines - 是否保留原空行
+   */
+  performExport(fileName, includeChapterNames, preserveEmptyLines) {
+    // 获取文档内容
+    let content = this.editor.value;
+
+    // 根据用户设置处理内容
+    if (!preserveEmptyLines) {
+      // 移除连续空行，保留单空行分隔段落
+      content = content.replace(/\s*\s*+/g, '');
+    }
+
+    // 如果有章节信息且用户选择包含章节名，按章节格式导出
+    if (this.chapters.length > 0 && includeChapterNames) {
+      content = this.formatContentWithChapters();
+    }
+
+    // 确保文件名以.txt结尾
+    const exportFileName = fileName.endsWith('.txt') ? fileName : `${fileName}.txt`;
+
+    // 创建Blob对象
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+
+    // 创建下载链接
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = exportFileName;
+
+    // 触发下载
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // 释放URL对象
+    URL.revokeObjectURL(url);
+
+    this.showMessage('TXT文件导出成功', 'success');
+  }
+
+  /**
+   * 格式化带章节的内容
+   */
+  formatContentWithChapters() {
+    let formattedContent = '';
+
+    this.chapters.forEach((chapter, index) => {
+      // 章节名前加换行（除了第一个章节）
+      if (index > 0) {
+        formattedContent += '';
+      }
+
+      // 添加章节标题
+      formattedContent += chapter.title;
+
+      // 章节标题后加换行
+      formattedContent += '';
+
+      // 添加章节内容
+      formattedContent += chapter.content;
+    });
+
+    return formattedContent;
   }
 
   /**
@@ -818,7 +1400,7 @@ class TextEditor {
     const documentManagerSection = document.getElementById('documentManagerSection');
     const uploadSection = document.getElementById('uploadSection');
     const editorSection = document.getElementById('editorSection');
-    
+
     if (documentManagerSection && uploadSection && editorSection) {
       documentManagerSection.style.display = 'block';
       uploadSection.style.display = 'none';

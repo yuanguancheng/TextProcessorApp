@@ -170,6 +170,7 @@
             <div class="toolbar-group">
               <button class="toolbar-button" id="saveButton" title="手动保存">💾</button>
               <button class="toolbar-button" id="autoSaveToggle" title="自动保存">⏱️</button>
+              <button class="toolbar-button" id="exportTxtButton" title="导出TXT文件">📤</button>
               <button class="toolbar-button" id="backToDocumentsButton" title="返回文档列表">📚</button>
             </div>
           </div>
@@ -237,6 +238,34 @@
         <button class="dialog-button" id="findNextButton">查找下一个</button>
         <button class="dialog-button" id="replaceNextButton">替换下一个</button>
         <button class="dialog-button" id="replaceAllButton">全部替换</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导出设置对话框 -->
+  <div class="dialog" id="exportSettingsDialog" hidden>
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3>导出设置</h3>
+        <button class="dialog-close" id="exportDialogClose">×</button>
+      </div>
+      <div class="dialog-body">
+        <div class="form-group">
+          <label for="exportFileName">文件名:</label>
+          <input type="text" id="exportFileName" class="form-input" value="未命名文档.txt">
+        </div>
+        <div class="form-options">
+          <label class="checkbox-label">
+            <input type="checkbox" id="includeChapterNames" checked> 包含章节名
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="preserveEmptyLines" checked> 保留原空行
+          </label>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="dialog-button" id="cancelExportButton">取消</button>
+        <button class="dialog-button" id="confirmExportButton">导出</button>
       </div>
     </div>
   </div>
