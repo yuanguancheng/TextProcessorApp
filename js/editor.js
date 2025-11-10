@@ -21,6 +21,10 @@ class TextEditor {
     this.removeEmptyLinesButton = document.getElementById('removeEmptyLinesButton');
     this.optimizeIndentButton = document.getElementById('optimizeIndentButton');
 
+    // 任务1：本地保存功能元素
+    this.saveButton = document.getElementById('saveButton');
+    this.autoSaveToggle = document.getElementById('autoSaveToggle');
+
     // 章节数据
     this.chapters = [];
     this.currentChapter = null;
@@ -31,11 +35,28 @@ class TextEditor {
     this.indentEnabled = true; // 缩进优化是否启用
     this.indentSize = 2; // 缩进大小（空格数）
 
+    // 任务1：本地保存功能状态
+    this.currentDocument = {
+      id: null,
+      fileName: '',
+      uploadTime: null,
+      lastEditTime: null,
+      chapters: [],
+      content: ''
+    };
+    this.autoSaveEnabled = true;
+
+    // 初始化存储管理器
+    this.storageManager = new StorageManager();
+
     // 初始化事件监听
     this.initEventListeners();
 
     // 初始化字数统计
     this.initWordCount();
+
+    // 启动自动保存
+    this.startAutoSave();
   }
 
   /**
@@ -77,6 +98,36 @@ class TextEditor {
 
     if (this.optimizeIndentButton) {
       this.optimizeIndentButton.addEventListener('click', () => this.optimizeIndent());
+    }
+
+    // 任务1：本地保存功能事件监听
+    if (this.saveButton) {
+      this.saveButton.addEventListener('click', () => this.manualSave());
+    }
+
+    if (this.autoSaveToggle) {
+      this.autoSaveToggle.addEventListener('click', () => this.toggleAutoSave());
+    }
+
+    const backToDocumentsButton = document.getElementById('backToDocumentsButton');
+    if (backToDocumentsButton) {
+      backToDocumentsButton.addEventListener('click', () => this.backToDocuments());
+    }
+
+    // 文档管理相关事件监听
+    const newDocumentButton = document.getElementById('newDocumentButton');
+    if (newDocumentButton) {
+      newDocumentButton.addEventListener('click', () => this.createNewDocument());
+    }
+
+    const uploadDocumentButton = document.getElementById('uploadDocumentButton');
+    if (uploadDocumentButton) {
+      uploadDocumentButton.addEventListener('click', () => this.showUploadSection());
+    }
+
+    const refreshDocumentsButton = document.getElementById('refreshDocumentsButton');
+    if (refreshDocumentsButton) {
+      refreshDocumentsButton.addEventListener('click', () => this.loadDocumentList());
     }
 
     // 编辑器内容变化事件，用于更新字数统计
@@ -478,6 +529,302 @@ class TextEditor {
   }
 
   // 其他方法保持不变...
+
+  /**
+   * 任务1：本地保存功能 - 启动自动保存
+   */
+  startAutoSave() {
+    if (this.autoSaveEnabled) {
+      this.storageManager.startAutoSave(() => this.getCurrentDocumentData());
+      this.updateAutoSaveButton();
+    }
+  }
+
+  /**
+   * 任务1：本地保存功能 - 停止自动保存
+   */
+  stopAutoSave() {
+    this.storageManager.stopAutoSave();
+    this.updateAutoSaveButton();
+  }
+
+  /**
+   * 任务1：本地保存功能 - 切换自动保存状态
+   */
+  toggleAutoSave() {
+    this.autoSaveEnabled = !this.autoSaveEnabled;
+    
+    if (this.autoSaveEnabled) {
+      this.startAutoSave();
+      this.showMessage('自动保存已开启', 'success');
+    } else {
+      this.stopAutoSave();
+      this.showMessage('自动保存已关闭', 'warning');
+    }
+  }
+
+  /**
+   * 任务1：本地保存功能 - 更新自动保存按钮状态
+   */
+  updateAutoSaveButton() {
+    if (this.autoSaveToggle) {
+      if (this.autoSaveEnabled) {
+        this.autoSaveToggle.textContent = '⏱️';
+        this.autoSaveToggle.title = '自动保存已开启';
+        this.autoSaveToggle.classList.add('active');
+      } else {
+        this.autoSaveToggle.textContent = '⏱️';
+        this.autoSaveToggle.title = '自动保存已关闭';
+        this.autoSaveToggle.classList.remove('active');
+      }
+    }
+  }
+
+  /**
+   * 任务1：本地保存功能 - 手动保存
+   */
+  async manualSave() {
+    const documentData = this.getCurrentDocumentData();
+    
+    if (!documentData.content || documentData.content.trim().length === 0) {
+      this.showMessage('文档内容为空，无法保存', 'warning');
+      return;
+    }
+
+    this.showMessage('正在保存文档...', 'info');
+    
+    const result = await this.storageManager.saveDocument(documentData);
+    
+    if (result.success) {
+      this.currentDocument.id = result.documentId;
+      this.showMessage('文档保存成功', 'success');
+    } else {
+      this.showMessage(`保存失败: ${result.error}`, 'error');
+    }
+  }
+
+  /**
+   * 任务1：本地保存功能 - 获取当前文档数据
+   */
+  getCurrentDocumentData() {
+    return {
+      id: this.currentDocument.id,
+      fileName: this.currentDocument.fileName || '未命名文档',
+      uploadTime: this.currentDocument.uploadTime || new Date().toISOString(),
+      lastEditTime: new Date().toISOString(),
+      chapters: this.chapters,
+      content: this.editor ? this.editor.value : ''
+    };
+  }
+
+  /**
+   * 任务1：本地保存功能 - 加载文档列表
+   */
+  async loadDocumentList() {
+    const documentListLoading = document.getElementById('documentListLoading');
+    const documentListContent = document.getElementById('documentListContent');
+    const documentListEmpty = document.getElementById('documentListEmpty');
+    const documentTableBody = document.getElementById('documentTableBody');
+
+    if (!documentListLoading || !documentListContent || !documentListEmpty || !documentTableBody) {
+      return;
+    }
+
+    documentListLoading.style.display = 'block';
+    documentListContent.style.display = 'none';
+    documentListEmpty.style.display = 'none';
+
+    try {
+      const documents = await this.storageManager.getAllDocuments();
+      
+      documentTableBody.innerHTML = '';
+      
+      if (documents.length === 0) {
+        documentListLoading.style.display = 'none';
+        documentListEmpty.style.display = 'block';
+        return;
+      }
+
+      documents.forEach(doc => {
+        const row = document.createElement('tr');
+        
+        // 格式化时间
+        const uploadTime = new Date(doc.uploadTime).toLocaleString('zh-CN');
+        const lastEditTime = new Date(doc.lastEditTime).toLocaleString('zh-CN');
+        
+        row.innerHTML = `
+          <td class="document-name">${doc.fileName}</td>
+          <td class="document-upload-time">${uploadTime}</td>
+          <td class="document-last-edit">${lastEditTime}</td>
+          <td class="document-chapter-count">${doc.chapters ? doc.chapters.length : 0}</td>
+          <td class="document-actions">
+            <button class="action-button edit-button" data-doc-id="${doc.id}">继续编辑</button>
+            <button class="action-button delete-button" data-doc-id="${doc.id}">删除</button>
+          </td>
+        `;
+        
+        documentTableBody.appendChild(row);
+      });
+
+      // 添加事件监听
+      documentTableBody.querySelectorAll('.edit-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const docId = e.target.dataset.docId;
+          this.loadDocument(docId);
+        });
+      });
+
+      documentTableBody.querySelectorAll('.delete-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const docId = e.target.dataset.docId;
+          this.deleteDocument(docId);
+        });
+      });
+
+      documentListLoading.style.display = 'none';
+      documentListContent.style.display = 'block';
+      
+    } catch (error) {
+      console.error('加载文档列表失败:', error);
+      documentListLoading.style.display = 'none';
+      documentListEmpty.style.display = 'block';
+      this.showMessage('加载文档列表失败', 'error');
+    }
+  }
+
+  /**
+   * 任务1：本地保存功能 - 加载文档
+   */
+  async loadDocument(documentId) {
+    try {
+      const document = await this.storageManager.getDocument(documentId);
+      
+      if (!document) {
+        this.showMessage('文档不存在', 'error');
+        return;
+      }
+
+      // 更新当前文档信息
+      this.currentDocument = { ...document };
+      
+      // 设置编辑器内容
+      if (this.editor) {
+        this.editor.value = document.content || '';
+      }
+
+      // 设置章节数据
+      this.chapters = document.chapters || [];
+      
+      // 更新预览
+      this.updatePreview();
+      
+      // 显示章节列表（如果有章节）
+      if (this.chapters.length > 0) {
+        this.displayChapterList();
+      }
+
+      // 切换到编辑器界面
+      this.showEditorSection();
+      
+      this.showMessage(`已加载文档: ${document.fileName}`, 'success');
+      
+    } catch (error) {
+      console.error('加载文档失败:', error);
+      this.showMessage('加载文档失败', 'error');
+    }
+  }
+
+  /**
+   * 任务1：本地保存功能 - 删除文档
+   */
+  async deleteDocument(documentId) {
+    if (!confirm('确定要删除这个文档吗？此操作不可恢复。')) {
+      return;
+    }
+
+    try {
+      const success = await this.storageManager.deleteDocument(documentId);
+      
+      if (success) {
+        this.showMessage('文档删除成功', 'success');
+        // 重新加载文档列表
+        this.loadDocumentList();
+      } else {
+        this.showMessage('文档删除失败', 'error');
+      }
+      
+    } catch (error) {
+      console.error('删除文档失败:', error);
+      this.showMessage('删除文档失败', 'error');
+    }
+  }
+
+  /**
+   * 任务1：本地保存功能 - 创建新文档
+   */
+  createNewDocument() {
+    this.currentDocument = {
+      id: null,
+      fileName: '新文档',
+      uploadTime: new Date().toISOString(),
+      lastEditTime: new Date().toISOString(),
+      chapters: [],
+      content: ''
+    };
+    
+    if (this.editor) {
+      this.editor.value = '';
+    }
+    
+    this.chapters = [];
+    this.updatePreview();
+    
+    this.showEditorSection();
+    this.showMessage('已创建新文档', 'success');
+  }
+
+  /**
+   * 任务1：本地保存功能 - 显示上传界面
+   */
+  showUploadSection() {
+    const documentManagerSection = document.getElementById('documentManagerSection');
+    const uploadSection = document.getElementById('uploadSection');
+    
+    if (documentManagerSection && uploadSection) {
+      documentManagerSection.style.display = 'none';
+      uploadSection.style.display = 'block';
+    }
+  }
+
+  /**
+   * 任务1：本地保存功能 - 显示编辑器界面
+   */
+  showEditorSection() {
+    const documentManagerSection = document.getElementById('documentManagerSection');
+    const uploadSection = document.getElementById('uploadSection');
+    const editorSection = document.getElementById('editorSection');
+    
+    if (documentManagerSection && uploadSection && editorSection) {
+      documentManagerSection.style.display = 'none';
+      uploadSection.style.display = 'none';
+      editorSection.style.display = 'block';
+    }
+  }
+
+  /**
+   * 任务1：本地保存功能 - 返回文档列表
+   */
+  backToDocuments() {
+    const documentManagerSection = document.getElementById('documentManagerSection');
+    const uploadSection = document.getElementById('uploadSection');
+    const editorSection = document.getElementById('editorSection');
+    
+    if (documentManagerSection && uploadSection && editorSection) {
+      documentManagerSection.style.display = 'block';
+      uploadSection.style.display = 'none';
+      editorSection.style.display = 'none';
+    }
+  }
 
   /**
    * 显示消息

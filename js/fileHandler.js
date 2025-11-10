@@ -375,6 +375,23 @@ class FileHandler {
       }
     });
     document.dispatchEvent(event);
+
+    // 任务1：本地保存功能 - 创建新文档并设置当前文档信息
+    if (window.textEditor) {
+      window.textEditor.currentDocument = {
+        id: null,
+        fileName: this.currentFile.name,
+        uploadTime: new Date().toISOString(),
+        lastEditTime: new Date().toISOString(),
+        chapters: [],
+        content: content
+      };
+      
+      // 自动保存新文档
+      setTimeout(() => {
+        window.textEditor.manualSave();
+      }, 1000);
+    }
   }
 
   /**
