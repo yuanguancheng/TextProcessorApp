@@ -25,6 +25,11 @@ class TextEditor {
     this.saveButton = document.getElementById('saveButton');
     this.autoSaveToggle = document.getElementById('autoSaveToggle');
 
+    // 响应式布局元素
+    this.mobileMenuButton = document.getElementById('mobileMenuButton');
+    this.chapterListPane = document.getElementById('chapterListPane');
+    this.chapterListOverlay = document.getElementById('chapterListOverlay');
+
     // 章节数据
     this.chapters = [];
     this.currentChapter = null;
@@ -145,6 +150,16 @@ class TextEditor {
     // 预览区滚动事件，用于高亮当前章节
     if (this.preview) {
       this.preview.addEventListener('scroll', () => this.highlightCurrentChapter());
+    }
+
+    // 移动端菜单按钮事件监听
+    if (this.mobileMenuButton) {
+      this.mobileMenuButton.addEventListener('click', () => this.toggleMobileMenu());
+    }
+
+    // 移动端遮罩层点击事件
+    if (this.chapterListOverlay) {
+      this.chapterListOverlay.addEventListener('click', () => this.closeMobileMenu());
     }
   }
 
@@ -1391,6 +1406,41 @@ class TextEditor {
     });
 
     return formattedContent;
+  }
+
+  /**
+   * 切换移动端菜单显示/隐藏
+   */
+  toggleMobileMenu() {
+    if (this.chapterListPane && this.chapterListOverlay) {
+      if (this.chapterListPane.classList.contains('mobile-open')) {
+        this.closeMobileMenu();
+      } else {
+        this.openMobileMenu();
+      }
+    }
+  }
+
+  /**
+   * 打开移动端菜单
+   */
+  openMobileMenu() {
+    if (this.chapterListPane && this.chapterListOverlay) {
+      this.chapterListPane.classList.add('mobile-open');
+      this.chapterListOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden'; // 防止背景滚动
+    }
+  }
+
+  /**
+   * 关闭移动端菜单
+   */
+  closeMobileMenu() {
+    if (this.chapterListPane && this.chapterListOverlay) {
+      this.chapterListPane.classList.remove('mobile-open');
+      this.chapterListOverlay.classList.remove('active');
+      document.body.style.overflow = ''; // 恢复背景滚动
+    }
   }
 
   /**

@@ -90,6 +90,7 @@
       <!-- 编辑器区域 -->
       <section class="editor-section" id="editorSection" hidden>
         <div class="editor-header">
+          <button class="mobile-menu-button" id="mobileMenuButton" title="显示/隐藏章节列表">☰</button>
           <h2>文本编辑器</h2>
           <div class="editor-controls">
             <button class="control-button" id="togglePreviewButton">显示/隐藏预览</button>
@@ -98,7 +99,9 @@
         </div>
 
         <div class="editor-container">
-          <!-- 在index.html文件中，找到章节列表面板的部分，添加以下内容 -->
+          <!-- 移动端章节列表遮罩 -->
+          <div class="chapter-list-overlay" id="chapterListOverlay"></div>
+          
           <!-- 左侧章节列表 -->
           <div class="chapter-list-pane" id="chapterListPane">
             <div class="chapter-list-header">

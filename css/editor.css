@@ -6,6 +6,24 @@
   min-height: 600px;
 }
 
+/* 移动端菜单按钮 */
+.mobile-menu-button {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px 10px;
+  margin-right: 10px;
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-button {
+    display: block;
+  }
+}
+
 .editor-header {
   display: flex;
   justify-content: space-between;
@@ -337,7 +355,7 @@
 
 /* 章节列表面板样式 - 任务3 */
 .chapter-list-pane {
-  width: 250px;
+  width: 30%;
   min-width: 200px;
   max-width: 400px;
   display: flex;
@@ -345,6 +363,22 @@
   background-color: #f8f9fa;
   border-right: 1px solid #ddd;
   overflow: hidden;
+}
+
+/* 内容区域样式 */
+.editor-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+
+/* 预览区域样式 */
+.preview-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
 }
 
 .chapter-list-header {
@@ -488,27 +522,104 @@
 /* 响应式设计调整 - 任务3 */
 @media (max-width: 1024px) {
   .chapter-list-pane {
-    width: 200px;
+    width: 30%;
     min-width: 180px;
   }
 }
 
+/* 移动端布局 */
 @media (max-width: 768px) {
   .editor-container {
     flex-direction: column;
   }
 
+  /* 桌面端布局：左侧章节列表30% + 右侧内容区70% */
   .chapter-list-pane {
-    width: 100%;
-    max-width: none;
-    height: 150px;
-    border-right: none;
-    border-bottom: 1px solid #ddd;
+    width: 30%;
+    min-width: 200px;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f9fa;
+    border-right: 1px solid #ddd;
+    overflow: hidden;
   }
 
   .editor-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+  }
+
+  .preview-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+  }
+
+  /* 移动端：默认隐藏章节列表 */
+  .chapter-list-pane {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    z-index: 1000;
+    background-color: #f8f9fa;
     border-right: none;
-    border-bottom: 1px solid #ddd;
+    transition: left 0.3s ease-in-out;
+    overflow-y: auto;
+  }
+
+  /* 移动端：章节列表显示状态 */
+  .chapter-list-pane.mobile-open {
+    left: 0;
+  }
+
+  /* 移动端：章节列表遮罩 */
+  .chapter-list-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+  }
+
+  .chapter-list-overlay.active {
+    display: block;
+  }
+
+  /* 移动端：内容区域占满宽度 */
+  .editor-pane {
+    width: 100%;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .preview-pane {
+    width: 100%;
+  }
+
+  /* 移动端：编辑器工具栏调整 */
+  .editor-toolbar {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .toolbar-group {
+    margin-right: 10px;
+    margin-bottom: 5px;
+  }
+
+  .toolbar-button {
+    padding: 4px 6px;
+    font-size: 14px;
   }
 }
 
