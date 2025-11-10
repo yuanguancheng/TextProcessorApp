@@ -75,62 +75,80 @@ class ChapterDetector {
       {
         name: "卷格式-无第字",
         pattern: /[卷篇部][一二三四五六七八九十百千万零\d]+/g,
-        priority: 9.5,
+        priority: 19.5,
         description: "匹配'卷一'、'卷2'、'篇一'、'部1'等无第字的卷格式"
       },
       {
         name: "篇格式",
         pattern: /第[一二三四五六七八九十百千万零\d]+篇/g,
-        priority: 9.4,
+        priority: 19.4,
         description: "匹配'第一篇'、'第2篇'等篇格式"
       },
       {
         name: "部格式",
         pattern: /第[一二三四五六七八九十百千万零\d]+部/g,
-        priority: 9.3,
+        priority: 19.3,
         description: "匹配'第一部'、'第2部'等部格式"
       },
       {
         name: "回格式",
         pattern: /第[一二三四五六七八九十百千万零\d]+回/g,
-        priority: 9.2,
+        priority: 19.2,
         description: "匹配'第一回'、'第2回'等回格式"
       },
       {
         name: "集格式",
         pattern: /第[一二三四五六七八九十百千万零\d]+集/g,
-        priority: 9.1,
+        priority: 19.1,
         description: "匹配'第一集'、'第2集'等集格式"
       },
       {
         name: "幕格式",
         pattern: /第[一二三四五六七八九十百千万零\d]+幕/g,
-        priority: 9.0,
+        priority: 19.0,
         description: "匹配'第一幕'、'第2幕'等幕格式"
       },
       {
         name: "场格式",
         pattern: /第[一二三四五六七八九十百千万零\d]+场/g,
-        priority: 8.9,
+        priority: 18.9,
         description: "匹配'第一场'、'第2场'等场格式"
       },
       {
         name: "折格式",
         pattern: /第[一二三四五六七八九十百千万零\d]+折/g,
-        priority: 8.8,
+        priority: 18.8,
         description: "匹配'第一折'、'第2折'等折格式"
       },
       {
-        name: "回格式",
-        pattern: /第[一二三四五六七八九十百千万零\d]+回/g,
-        priority: 9.2,
-        description: "匹配'第一回'、'第2回'等回格式"
+        name: "话格式",
+        pattern: /第[一二三四五六七八九十百千万零\d]+话/g,
+        priority: 18.7,
+        description: "匹配'第一话'、'第2话'等话格式"
       },
       {
-        name: "集格式",
-        pattern: /第[一二三四五六七八九十百千万零\d]+集/g,
-        priority: 9.1,
-        description: "匹配'第一集'、'第2集'等集格式"
+        name: "节格式-无第字",
+        pattern: /[节][一二三四五六七八九十百千万零\d]+/g,
+        priority: 18.6,
+        description: "匹配'节一'、'节2'等无第字的节格式"
+      },
+      {
+        name: "章格式-无第字",
+        pattern: /[章][一二三四五六七八九十百千万零\d]+/g,
+        priority: 18.5,
+        description: "匹配'章一'、'章2'等无第字的章格式"
+      },
+      {
+        name: "段格式",
+        pattern: /第[一二三四五六七八九十百千万零\d]+段/g,
+        priority: 18.4,
+        description: "匹配'第一段'、'第2段'等段格式"
+      },
+      {
+        name: "部分格式",
+        pattern: /第[一二三四五六七八九十百千万零\d]+部分/g,
+        priority: 18.3,
+        description: "匹配'第一部分'、'第2部分'等部分格式"
       },
       {
         name: "阿拉伯数字章节-带空格",
