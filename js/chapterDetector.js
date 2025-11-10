@@ -91,6 +91,48 @@ class ChapterDetector {
         description: "匹配'第一部'、'第2部'等部格式"
       },
       {
+        name: "回格式",
+        pattern: /第[一二三四五六七八九十百千万零\d]+回/g,
+        priority: 9.2,
+        description: "匹配'第一回'、'第2回'等回格式"
+      },
+      {
+        name: "集格式",
+        pattern: /第[一二三四五六七八九十百千万零\d]+集/g,
+        priority: 9.1,
+        description: "匹配'第一集'、'第2集'等集格式"
+      },
+      {
+        name: "幕格式",
+        pattern: /第[一二三四五六七八九十百千万零\d]+幕/g,
+        priority: 9.0,
+        description: "匹配'第一幕'、'第2幕'等幕格式"
+      },
+      {
+        name: "场格式",
+        pattern: /第[一二三四五六七八九十百千万零\d]+场/g,
+        priority: 8.9,
+        description: "匹配'第一场'、'第2场'等场格式"
+      },
+      {
+        name: "折格式",
+        pattern: /第[一二三四五六七八九十百千万零\d]+折/g,
+        priority: 8.8,
+        description: "匹配'第一折'、'第2折'等折格式"
+      },
+      {
+        name: "回格式",
+        pattern: /第[一二三四五六七八九十百千万零\d]+回/g,
+        priority: 9.2,
+        description: "匹配'第一回'、'第2回'等回格式"
+      },
+      {
+        name: "集格式",
+        pattern: /第[一二三四五六七八九十百千万零\d]+集/g,
+        priority: 9.1,
+        description: "匹配'第一集'、'第2集'等集格式"
+      },
+      {
         name: "阿拉伯数字章节-带空格",
         pattern: /第\d+章\s*[：:]\s*/g,
         priority: 9,
