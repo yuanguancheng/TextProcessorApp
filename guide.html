@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文本处理器 - 使用指南</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .guide-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      line-height: 1.6;
+    }
+    
+    .guide-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .guide-section {
+      margin-bottom: 40px;
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+    
+    .guide-section h2 {
+      color: #2196f3;
+      margin-top: 0;
+      border-bottom: 2px solid #2196f3;
+      padding-bottom: 10px;
+    }
+    
+    .guide-section h3 {
+      color: #1976d2;
+      margin-top: 25px;
+    }
+    
+    .step {
+      margin-bottom: 20px;
+      padding-left: 20px;
+      position: relative;
+    }
+    
+    .step-number {
+      position: absolute;
+      left: -20px;
+      top: 0;
+      width: 30px;
+      height: 30px;
+      background-color: #2196f3;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    
+    .screenshot {
+      margin: 15px 0;
+      text-align: center;
+    }
+    
+    .screenshot img {
+      max-width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .tip {
+      background-color: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 10px 15px;
+      margin: 15px 0;
+      border-radius: 0 4px 4px 0;
+    }
+    
+    .warning {
+      background-color: #fff8e1;
+      border-left: 4px solid #ff9800;
+      padding: 10px 15px;
+      margin: 15px 0;
+      border-radius: 0 4px 4px 0;
+    }
+    
+    .back-to-app {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #2196f3;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+    
+    .back-to-app:hover {
+      background-color: #1976d2;
+    }
+    
+    .feature-list {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    
+    .feature-list li {
+      margin-bottom: 10px;
+      padding-left: 25px;
+      position: relative;
+    }
+    
+    .feature-list li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #4caf50;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="guide-container">
+    <div class="guide-header">
+      <h1>文本处理器使用指南</h1>
+      <p>轻松处理文本文件，智能分章，高效导出</p>
+    </div>
+
+    <div class="guide-section">
+      <h2>快速开始</h2>
+      <p>文本处理器是一款功能强大的文本编辑工具，支持多种编码格式的文本文件，提供智能分章、内容优化和导出功能。</p>
+      
+      <h3>主要功能</h3>
+      <ul class="feature-list">
+        <li>支持多种编码格式（UTF-8、GBK、ANSI等）</li>
+        <li>智能章节检测和分章</li>
+        <li>内容优化（去除空行、优化缩进）</li>
+        <li>多种导出格式和选项</li>
+        <li>本地保存和自动保存</li>
+        <li>响应式设计，支持移动端</li>
+      </ul>
+    </div>
+
+    <div class="guide-section">
+      <h2>如何上传文件</h2>
+      
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>选择文件</h3>
+        <p>点击上传区域或拖拽文件到上传区域。支持.txt格式的文本文件。</p>
+        <div class="screenshot">
+          <img src="assets/upload-step1.png" alt="上传文件步骤1" />
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>文件验证</h3>
+        <p>系统会自动验证文件格式和大小，显示文件信息。</p>
+        <div class="screenshot">
+          <img src="assets/upload-step2.png" alt="上传文件步骤2" />
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>开始处理</h3>
+        <p>点击"开始处理"按钮，系统会自动读取文件内容并进入编辑界面。</p>
+        <div class="tip">
+          <strong>提示：</strong>大文件处理可能需要一些时间，请耐心等待。
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h2>如何进行分章</h2>
+      
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>自动分章</h3>
+        <p>上传文件后，系统会自动检测章节格式并进行分章。支持多种章节格式，如"第一章"、"第1章"、"Chapter 1"等。</p>
+        <div class="screenshot">
+          <img src="assets/chapter-step1.png" alt="自动分章" />
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>手动调整</h3>
+        <p>如果自动分章结果不理想，可以使用手动分章工具：</p>
+        <ul>
+          <li><strong>自定义规则：</strong>输入自定义章节格式，如"第.*回"</li>
+          <li><strong>拆分章节：</strong>将当前章节拆分为多个章节</li>
+          <li><strong>合并章节：</strong>将多个章节合并为一个章节</li>
+        </ul>
+        <div class="screenshot">
+          <img src="assets/chapter-step2.png" alt="手动调整分章" />
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>章节导航</h3>
+        <p>左侧章节列表可以快速导航到不同章节。点击章节标题即可跳转到对应内容。</p>
+        <div class="warning">
+          <strong>注意：</strong>移动端需要点击菜单按钮才能显示章节列表。
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h2>如何导出文件</h2>
+      
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>打开导出设置</h3>
+        <p>点击工具栏中的"导出TXT文件"按钮（📤图标）。</p>
+        <div class="screenshot">
+          <img src="assets/export-step1.png" alt="打开导出设置" />
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>配置导出选项</h3>
+        <p>在导出设置对话框中，您可以：</p>
+        <ul>
+          <li><strong>设置文件名：</strong>自定义导出文件的名称</li>
+          <li><strong>包含章节名：</strong>选择是否在导出内容中包含章节标题</li>
+          <li><strong>保留原空行：</strong>选择是否保留原始的空行格式</li>
+        </ul>
+        <div class="screenshot">
+          <img src="assets/export-step2.png" alt="配置导出选项" />
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>完成导出</h3>
+        <p>点击"导出"按钮，系统会生成并下载TXT文件。</p>
+        <div class="tip">
+          <strong>提示：</strong>导出的文件会自动保存到您的默认下载文件夹。
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h2>高级功能</h2>
+      
+      <h3>内容优化</h3>
+      <p>使用工具栏中的内容优化工具，可以：</p>
+      <ul>
+        <li><strong>去除空行：</strong>移除多余的空行，保留段落分隔</li>
+        <li><strong>优化缩进：</strong>统一段落缩进格式</li>
+      </ul>
+      
+      <h3>阅读模式</h3>
+      <p>点击"阅读模式"按钮，可以：</p>
+      <ul>
+        <li>隐藏编辑工具，专注于阅读</li>
+        <li>自定义字体、背景、行距等阅读设置</li>
+        <li>保留章节导航功能</li>
+      </ul>
+      
+      <h3>本地保存</h3>
+      <p>系统支持本地保存功能：</p>
+      <ul>
+        <li><strong>手动保存：</strong>点击"保存"按钮保存当前编辑内容</li>
+        <li><strong>自动保存：</strong>开启后，系统会定期自动保存内容</li>
+        <li><strong>文档管理：</strong>可以查看和管理已保存的文档</li>
+      </ul>
+    </div>
+
+    <div class="guide-section">
+      <h2>常见问题</h2>
+      
+      <h3>Q: 为什么我的文件上传失败？</h3>
+      <p>A: 请检查文件格式是否为.txt，文件大小是否超过50MB。如果问题仍然存在，请尝试使用不同的浏览器。</p>
+      
+      <h3>Q: 为什么分章不准确？</h3>
+      <p>A: 系统支持多种章节格式，但如果您的文档使用了特殊格式，可以尝试使用手动分章功能，或者运行优化分析来补充规则库。</p>
+      
+      <h3>Q: 如何处理大文件？</h3>
+      <p>A: 对于大文件，系统会自动使用分片读取技术。如果仍然感觉卡顿，可以尝试运行优化分析来调整处理参数。</p>
+      
+      <h3>Q: 我的文档编码不正确怎么办？</h3>
+      <p>A: 系统会自动检测文件编码，但如果检测错误，您可以在文件信息中手动选择正确的编码格式。</p>
+    </div>
+
+    <div class="guide-section">
+      <h2>技术支持</h2>
+      <p>如果您在使用过程中遇到问题，可以通过以下方式获取帮助：</p>
+      <ul>
+        <li>查看兼容性测试结果，了解当前浏览器的支持情况</li>
+        <li>运行优化分析，获取针对您使用场景的优化建议</li>
+        <li>查看功能测试结果，了解各项功能的可用性</li>
+      </ul>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px;">
+      <a href="index.html" class="back-to-app">返回应用</a>
+    </div>
+  </div>
+</body>
+</html>
