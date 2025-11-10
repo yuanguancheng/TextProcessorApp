@@ -73,6 +73,24 @@ class ChapterDetector {
         description: "匹配'第一卷'、'第二卷'等中文数字卷"
       },
       {
+        name: "卷格式-无第字",
+        pattern: /[卷篇部][一二三四五六七八九十百千万零\d]+/g,
+        priority: 9.5,
+        description: "匹配'卷一'、'卷2'、'篇一'、'部1'等无第字的卷格式"
+      },
+      {
+        name: "篇格式",
+        pattern: /第[一二三四五六七八九十百千万零\d]+篇/g,
+        priority: 9.4,
+        description: "匹配'第一篇'、'第2篇'等篇格式"
+      },
+      {
+        name: "部格式",
+        pattern: /第[一二三四五六七八九十百千万零\d]+部/g,
+        priority: 9.3,
+        description: "匹配'第一部'、'第2部'等部格式"
+      },
+      {
         name: "阿拉伯数字章节-带空格",
         pattern: /第\d+章\s*[：:]\s*/g,
         priority: 9,

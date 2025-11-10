@@ -29,10 +29,15 @@ class FileHandler {
     // 文件读取相关属性
     this.currentFile = null;
     this.fileReader = null;
-    this.chunkSize = 1024 * 1024; // 1MB 分片大小
+    this.chunkSize = 116508; // 优化后的分片大小（约116KB）
     this.currentChunk = 0;
     this.totalChunks = 0;
     this.fileContent = '';
+    
+    // 性能优化相关属性
+    this.batchDomUpdates = true;
+    this.pendingDomUpdates = [];
+    this.domUpdateScheduled = false;
 
     // 支持的编码列表
     this.encodings = ['utf-8', 'gbk', 'gb2312', 'big5', 'utf-16le', 'utf-16be'];
@@ -568,6 +573,36 @@ class FileHandler {
     this.pendingDomUpdates = [];
     this.domUpdateScheduled = false;
     console.log('已启用批量DOM更新');
+  }
+
+  /**
+   * 批量处理DOM更新
+   * @param {Function} updateFunction - 更新函数
+   */
+  batchUpdate(updateFunction) {
+    if (!this.batchDomUpdates) {
+      // 如果未启用批量更新，直接执行
+      updateFunction();
+      return;
+    }
+
+    // 将更新函数添加到待处理队列
+    this.pendingDomUpdates.push(updateFunction);
+
+    // 如果尚未安排更新，则安排一个
+    if (!this.domUpdateScheduled) {
+      this.domUpdateScheduled = true;
+      requestAnimationFrame(() => {
+        // 执行所有待处理的更新
+        for (const update of this.pendingDomUpdates) {
+          update();
+        }
+        
+        // 重置状态
+        this.pendingDomUpdates = [];
+        this.domUpdateScheduled = false;
+      });
+    }
   }
 
   /**
