@@ -9,7 +9,7 @@ set "USERNAME=%~1"
 if "%USERNAME%"=="" set "USERNAME=your-username"
 
 set "REPO_NAME=%~2"
-if "%REPO_NAME%"=="" set "REPO_NAME=text-processor"
+if "%REPO_NAME%"=="" set "REPO_NAME=TextProcessorApp"
 
 echo ========================================
 echo   Text Processor - GitHub Pages Deploy
