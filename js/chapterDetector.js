@@ -273,7 +273,8 @@ class ChapterDetector {
     }
 
     // 处理第一章之前的内容
-    if (matches[0].position > 0) {
+    // 只有当第一章之前的内容足够长（超过100个字符）或者有多个章节时才创建前言
+    if (matches[0].position > 100 || matches.length > 1) {
       chapters.push({
         title: "前言",
         content: content.substring(0, matches[0].position),
@@ -569,8 +570,9 @@ class ChapterDetector {
       const topFormat = sortedFormats[0];
       const secondFormat = sortedFormats[1];
       
-      // 如果第二多的格式出现次数超过第一格式的30%，认为是混合格式
-      if (secondFormat.count / topFormat.count > 0.3) {
+      // 降低混合格式检测的阈值，使更多格式被识别为混合格式
+      // 如果第二多的格式出现次数超过第一格式的20%，认为是混合格式
+      if (secondFormat.count / topFormat.count > 0.2) {
         return {
           isMixed: true,
           primaryFormat: topFormat,

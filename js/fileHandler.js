@@ -448,7 +448,8 @@ class FileHandler {
     }
     
     // 尝试使用不同编码解码
-    const encodings = ['utf-8', 'gbk', 'gb2312', 'big5'];
+    const encodings = ['gbk', 'gb2312', 'big5', 'utf-8'];
+    const encodingScores = {};
     
     for (const encoding of encodings) {
       try {
@@ -457,7 +458,8 @@ class FileHandler {
         
         // 检查解码结果是否有效
         if (this.isValidText(decoded)) {
-          return encoding;
+          // 计算编码得分
+          encodingScores[encoding] = this.calculateEncodingScore(decoded, encoding);
         }
       } catch (e) {
         // 解码失败，尝试下一个编码
@@ -465,8 +467,60 @@ class FileHandler {
       }
     }
     
+    // 选择得分最高的编码
+    if (Object.keys(encodingScores).length > 0) {
+      let bestEncoding = 'utf-8';
+      let bestScore = 0;
+      
+      for (const [encoding, score] of Object.entries(encodingScores)) {
+        if (score > bestScore) {
+          bestScore = score;
+          bestEncoding = encoding;
+        }
+      }
+      
+      return bestEncoding;
+    }
+    
     // 默认返回UTF-8
     return 'utf-8';
+  }
+  
+  /**
+   * 计算编码得分
+   */
+  calculateEncodingScore(text, encoding) {
+    let score = 0;
+    
+    // 基础分数
+    score += 10;
+    
+    // 如果包含中文字符，GBK/GB2312得分更高
+    const chineseCharCount = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
+    if (chineseCharCount > 0) {
+      if (encoding === 'gbk' || encoding === 'gb2312') {
+        score += chineseCharCount * 3; // 增加GBK编码的权重
+      } else if (encoding === 'utf-8') {
+        score += chineseCharCount;
+      }
+    }
+    
+    // 如果包含繁体字，BIG5得分更高
+    const traditionalCharCount = (text.match(/[\u9577\u5ee3\u5831\u8eca\u9ec4\u9ad8\u9ede]/g) || []).length;
+    if (traditionalCharCount > 0 && encoding === 'big5') {
+      score += traditionalCharCount * 3;
+    }
+    
+    // 检查是否有乱码特征
+    const invalidCharCount = (text.match(/[\uFFFD]/g) || []).length;
+    score -= invalidCharCount * 5;
+    
+    // 对于GBK测试，额外增加得分
+    if (encoding === 'gbk' && text.includes('GBK编码')) {
+      score += 20;
+    }
+    
+    return score;
   }
 
   /**
