@@ -63,7 +63,7 @@
         </div>
 
         <div class="editor-container">
-          <!-- 在index.html文件中，找到章节列表面板的部分，确保它包含以下元素 -->
+          <!-- 在index.html文件中，找到章节列表面板的部分，添加以下内容 -->
           <!-- 左侧章节列表 -->
           <div class="chapter-list-pane" id="chapterListPane">
             <div class="chapter-list-header">
@@ -71,6 +71,23 @@
               <div class="chapter-list-controls">
                 <button class="chapter-list-button" id="expandAllButton" title="展开全部">▼</button>
                 <button class="chapter-list-button" id="collapseAllButton" title="折叠全部">▲</button>
+              </div>
+            </div>
+            <!-- 任务4：手动分章工具 -->
+            <div class="manual-chapter-tools">
+              <div class="tool-section">
+                <h4>自定义规则</h4>
+                <div class="custom-rule-input">
+                  <input type="text" id="customRuleInput" class="form-input" placeholder="输入关键词或正则表达式">
+                  <button id="applyCustomRuleButton" class="tool-button">应用</button>
+                </div>
+              </div>
+              <div class="tool-section">
+                <h4>章节操作</h4>
+                <div class="chapter-operation-buttons">
+                  <button id="splitChapterButton" class="tool-button" title="在光标位置拆分章节">拆分章节</button>
+                  <button id="mergeChaptersButton" class="tool-button" title="合并选中的章节">合并章节</button>
+                </div>
               </div>
             </div>
             <div class="chapter-list-content" id="chapterListContent">
@@ -82,7 +99,6 @@
               </ul>
             </div>
           </div>
-
 
           <!-- 中间编辑区 -->
           <div class="editor-pane" id="editorPane">

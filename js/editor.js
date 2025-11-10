@@ -1,5 +1,5 @@
 /**
- * 文本编辑器类 - 任务3：章节列表展示与跳转
+ * 文本编辑器类 - 任务4：手动分章工具
  */
 class TextEditor {
   constructor() {
@@ -11,9 +11,16 @@ class TextEditor {
     this.expandAllButton = document.getElementById('expandAllButton');
     this.collapseAllButton = document.getElementById('collapseAllButton');
 
+    // 任务4：手动分章工具元素
+    this.customRuleInput = document.getElementById('customRuleInput');
+    this.applyCustomRuleButton = document.getElementById('applyCustomRuleButton');
+    this.splitChapterButton = document.getElementById('splitChapterButton');
+    this.mergeChaptersButton = document.getElementById('mergeChaptersButton');
+
     // 章节数据
     this.chapters = [];
     this.currentChapter = null;
+    this.selectedChapters = new Set(); // 用于存储选中的章节
 
     // 初始化事件监听
     this.initEventListeners();
@@ -36,6 +43,19 @@ class TextEditor {
 
     if (this.collapseAllButton) {
       this.collapseAllButton.addEventListener('click', () => this.collapseAllChapters());
+    }
+
+    // 任务4：手动分章工具事件监听
+    if (this.applyCustomRuleButton) {
+      this.applyCustomRuleButton.addEventListener('click', () => this.applyCustomRule());
+    }
+
+    if (this.splitChapterButton) {
+      this.splitChapterButton.addEventListener('click', () => this.splitChapter());
+    }
+
+    if (this.mergeChaptersButton) {
+      this.mergeChaptersButton.addEventListener('click', () => this.mergeChapters());
     }
 
     // 编辑器滚动事件，用于高亮当前章节
@@ -105,6 +125,15 @@ class TextEditor {
       chapterTitle.className = 'chapter-title';
       chapterTitle.textContent = chapter.title;
 
+      // 选择框（用于多选）
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'chapter-checkbox';
+      checkbox.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleChapterSelection(index);
+      });
+
       // 折叠/展开按钮（仅当章节内容较长时显示）
       const chapterToggle = document.createElement('span');
       chapterToggle.className = 'chapter-toggle';
@@ -115,6 +144,7 @@ class TextEditor {
       });
 
       // 组装元素
+      li.appendChild(checkbox);
       li.appendChild(chapterNumber);
       li.appendChild(chapterTitle);
       li.appendChild(chapterToggle);
@@ -148,6 +178,215 @@ class TextEditor {
         li.appendChild(subList);
       }
     });
+  }
+
+  /**
+   * 任务4：应用自定义规则
+   */
+  applyCustomRule() {
+    const ruleText = this.customRuleInput.value.trim();
+
+    if (!ruleText) {
+      this.showMessage('请输入自定义规则', 'warning');
+      return;
+    }
+
+    const content = this.editor.value;
+
+    if (!content.trim()) {
+      this.showMessage('请先输入文本内容', 'warning');
+      return;
+    }
+
+    try {
+      // 创建章节检测器实例
+      const chapterDetector = new ChapterDetector();
+
+      // 判断是关键词还是正则表达式
+      let pattern;
+      if (ruleText.startsWith('/') && ruleText.endsWith('/')) {
+        // 正则表达式
+        const regexParts = ruleText.slice(1, -1).split(':');
+        const flags = regexParts.length > 1 ? regexParts[1] : 'g';
+        pattern = new RegExp(regexParts[0], flags);
+      } else {
+        // 关键词，转换为正则表达式
+        pattern = new RegExp(ruleText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+      }
+
+      // 创建临时规则
+      const tempRule = {
+        name: "自定义规则",
+        pattern: pattern,
+        priority: 100, // 设置高优先级
+        description: `用户自定义规则: ${ruleText}`
+      };
+
+      // 添加临时规则到规则库
+      chapterDetector.addRule(tempRule);
+
+      // 使用自定义规则进行分章
+      const result = chapterDetector.performAutoChapterDivision(content);
+
+      // 更新章节数据
+      this.chapters = result.chapters;
+
+      // 显示章节列表
+      this.displayChapterList();
+
+      // 显示结果
+      if (result.chapters.length > 0) {
+        this.showMessage(`使用自定义规则成功分章，共 ${result.chapters.length} 个章节`, 'success');
+      } else {
+        this.showMessage('自定义规则未匹配到任何章节', 'warning');
+      }
+
+      // 移除临时规则
+      chapterDetector.removeRule("自定义规则");
+
+    } catch (error) {
+      this.showMessage(`应用自定义规则时出错: ${error.message}`, 'error');
+    }
+  }
+
+  /**
+   * 任务4：拆分章节
+   */
+  splitChapter() {
+    if (this.chapters.length === 0) {
+      this.showMessage('请先进行章节检测', 'warning');
+      return;
+    }
+
+    // 获取当前光标位置
+    const cursorPosition = this.editor.selectionStart;
+
+    // 查找光标所在的章节
+    let currentChapterIndex = -1;
+    for (let i = 0; i < this.chapters.length; i++) {
+      const chapter = this.chapters[i];
+      if (cursorPosition >= chapter.startPosition && cursorPosition <= chapter.endPosition) {
+        currentChapterIndex = i;
+        break;
+      }
+    }
+
+    if (currentChapterIndex === -1) {
+      this.showMessage('请将光标放在要拆分的章节内', 'warning');
+      return;
+    }
+
+    const currentChapter = this.chapters[currentChapterIndex];
+
+    // 如果光标在章节开头或结尾，不允许拆分
+    if (cursorPosition <= currentChapter.startPosition || cursorPosition >= currentChapter.endPosition - 10) {
+      this.showMessage('光标位置不适合拆分章节', 'warning');
+      return;
+    }
+
+    // 确认拆分
+    if (!confirm(`确定要在当前位置拆分章节 "${currentChapter.title}" 吗？`)) {
+      return;
+    }
+
+    // 获取拆分点前后的内容
+    const beforeContent = this.editor.value.substring(currentChapter.startPosition, cursorPosition);
+    const afterContent = this.editor.value.substring(cursorPosition, currentChapter.endPosition);
+
+    // 创建新章节标题
+    const newChapterTitle = prompt('请输入新章节的标题:', `${currentChapter.title} (续)`);
+    if (!newChapterTitle) {
+      return;
+    }
+
+    // 在编辑器中插入新章节标题
+    const newChapterText = `\n${newChapterTitle}\n`;
+    this.editor.value =
+      this.editor.value.substring(0, cursorPosition) +
+      newChapterText +
+      this.editor.value.substring(cursorPosition);
+
+    // 重新检测章节
+    this.detectChapters();
+
+    this.showMessage('章节拆分成功', 'success');
+  }
+
+  /**
+   * 任务4：合并章节
+   */
+  mergeChapters() {
+    if (this.chapters.length === 0) {
+      this.showMessage('请先进行章节检测', 'warning');
+      return;
+    }
+
+    if (this.selectedChapters.size < 2) {
+      this.showMessage('请选择至少两个章节进行合并', 'warning');
+      return;
+    }
+
+    // 将选中的章节索引转换为数组并排序
+    const selectedIndices = Array.from(this.selectedChapters).sort((a, b) => a - b);
+
+    // 确认合并
+    const chapterTitles = selectedIndices.map(i => this.chapters[i].title).join('、');
+    if (!confirm(`确定要合并以下章节吗？\n${chapterTitles}`)) {
+      return;
+    }
+
+    // 获取第一个章节（保留其标题）
+    const firstChapter = this.chapters[selectedIndices[0]];
+
+    // 合并章节内容
+    let mergedContent = firstChapter.content;
+    for (let i = 1; i < selectedIndices.length; i++) {
+      const chapter = this.chapters[selectedIndices[i]];
+      // 移除章节标题，只保留内容
+      const contentWithoutTitle = chapter.content.replace(new RegExp(`^${chapter.title}\\s*[:：]?\\s*`), '');
+      mergedContent += '\n\n' + contentWithoutTitle;
+    }
+
+    // 计算合并后的章节位置
+    const startPosition = firstChapter.startPosition;
+    const endPosition = this.chapters[selectedIndices[selectedIndices.length - 1]].endPosition;
+
+    // 在编辑器中替换内容
+    this.editor.value =
+      this.editor.value.substring(0, startPosition) +
+      firstChapter.title + '\n' +
+      mergedContent +
+      this.editor.value.substring(endPosition);
+
+    // 清空选中状态
+    this.selectedChapters.clear();
+
+    // 重新检测章节
+    this.detectChapters();
+
+    this.showMessage('章节合并成功', 'success');
+  }
+
+  /**
+   * 任务4：切换章节选择状态
+   * @param {number} chapterIndex - 章节索引
+   */
+  toggleChapterSelection(chapterIndex) {
+    const chapterItem = this.chapterList.querySelector(`.chapter-item[data-index="${chapterIndex}"]`);
+    const checkbox = chapterItem.querySelector('.chapter-checkbox');
+
+    if (this.selectedChapters.has(chapterIndex)) {
+      this.selectedChapters.delete(chapterIndex);
+      chapterItem.classList.remove('selected');
+      checkbox.checked = false;
+    } else {
+      this.selectedChapters.add(chapterIndex);
+      chapterItem.classList.add('selected');
+      checkbox.checked = true;
+    }
+
+    // 更新合并按钮状态
+    this.mergeChaptersButton.disabled = this.selectedChapters.size < 2;
   }
 
   /**

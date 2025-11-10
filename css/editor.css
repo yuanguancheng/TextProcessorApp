@@ -507,3 +507,124 @@
     border-bottom: 1px solid #ddd;
   }
 }
+
+/* 在editor.css文件末尾添加以下代码 */
+
+/* 任务4：手动分章工具样式 */
+.manual-chapter-tools {
+  padding: 10px 15px;
+  border-bottom: 1px solid #ddd;
+  background-color: #f5f5f5;
+}
+
+.tool-section {
+  margin-bottom: 10px;
+}
+
+.tool-section:last-child {
+  margin-bottom: 0;
+}
+
+.tool-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.custom-rule-input {
+  display: flex;
+  gap: 5px;
+}
+
+.custom-rule-input .form-input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.tool-button {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.tool-button:hover {
+  background-color: #357abf;
+}
+
+.tool-button:active {
+  background-color: #2968a8;
+}
+
+.tool-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.chapter-operation-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+/* 章节选中状态样式 */
+.chapter-item.selected {
+  background-color: #e3f2fd;
+  border-left-color: #2196f3;
+}
+
+.sub-chapter-item.selected {
+  background-color: #e3f2fd;
+  border-left-color: #2196f3;
+}
+
+/* 章节操作提示 */
+.chapter-operation-hint {
+  padding: 5px 10px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 3px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: #856404;
+}
+
+/* 章节拆分标记 */
+.chapter-split-marker {
+  border-top: 2px dashed #2196f3;
+  margin: 10px 0;
+  position: relative;
+}
+
+.chapter-split-marker::before {
+  content: "拆分点";
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  background-color: #2196f3;
+  color: white;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+}
+
+/* 响应式设计调整 */
+@media (max-width: 768px) {
+  .manual-chapter-tools {
+    padding: 8px 10px;
+  }
+
+  .custom-rule-input {
+    flex-direction: column;
+  }
+
+  .chapter-operation-buttons {
+    flex-direction: column;
+  }
+}
