@@ -98,7 +98,7 @@ class TestRunner {
     }
     
     // 尝试使用不同编码解码
-    const encodings = ['gbk', 'gb2312', 'big5', 'utf-8'];
+    const encodings = ['utf-8', 'gbk', 'gb2312', 'big5'];
     const encodingScores = {};
     
     for (const encoding of encodings) {
@@ -145,12 +145,12 @@ class TestRunner {
     // 基础分数
     score += 10;
     
-    // 如果包含中文字符，GBK/GB2312得分更高
+    // 如果包含中文字符，UTF-8得分更高（因为现代应用更常用UTF-8）
     const chineseCharCount = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
     if (chineseCharCount > 0) {
-      if (encoding === 'gbk' || encoding === 'gb2312') {
-        score += chineseCharCount * 3; // 增加GBK编码的权重
-      } else if (encoding === 'utf-8') {
+      if (encoding === 'utf-8') {
+        score += chineseCharCount * 2; // UTF-8权重更高
+      } else if (encoding === 'gbk' || encoding === 'gb2312') {
         score += chineseCharCount;
       }
     }

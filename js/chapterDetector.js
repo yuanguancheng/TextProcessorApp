@@ -566,20 +566,14 @@ class ChapterDetector {
     });
     
     // 3. 检测是否为混合格式
+    // 如果有多种格式，就认为是混合格式（降低阈值）
     if (sortedFormats.length > 1) {
-      const topFormat = sortedFormats[0];
-      const secondFormat = sortedFormats[1];
-      
-      // 降低混合格式检测的阈值，使更多格式被识别为混合格式
-      // 如果第二多的格式出现次数超过第一格式的20%，认为是混合格式
-      if (secondFormat.count / topFormat.count > 0.2) {
-        return {
-          isMixed: true,
-          primaryFormat: topFormat,
-          secondaryFormats: sortedFormats.slice(1),
-          allFormats: sortedFormats
-        };
-      }
+      return {
+        isMixed: true,
+        primaryFormat: sortedFormats[0] || null,
+        secondaryFormats: sortedFormats.slice(1),
+        allFormats: sortedFormats
+      };
     }
     
     return {
