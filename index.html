@@ -7,6 +7,7 @@
   <title>文本处理器</title>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/upload.css">
+  <link rel="stylesheet" href="css/editor.css">
 </head>
 
 <body>
@@ -16,7 +17,7 @@
     </header>
 
     <main>
-      <section class="upload-section">
+      <section class="upload-section" id="uploadSection">
         <h2>上传文本文件</h2>
 
         <!-- 文件上传区域 -->
@@ -51,15 +52,102 @@
         </div>
       </section>
 
-      <!-- 文件内容显示区域 -->
-      <section class="content-section" id="contentSection" hidden>
-        <h2>文件内容</h2>
-        <div class="content-display" id="contentDisplay"></div>
+      <!-- 编辑器区域 -->
+      <section class="editor-section" id="editorSection" hidden>
+        <div class="editor-header">
+          <h2>文本编辑器</h2>
+          <div class="editor-controls">
+            <button class="control-button" id="togglePreviewButton">显示/隐藏预览</button>
+            <button class="control-button" id="backToUploadButton">返回上传</button>
+          </div>
+        </div>
+
+        <div class="editor-container">
+          <!-- 左侧编辑区 -->
+          <div class="editor-pane" id="editorPane">
+            <div class="editor-toolbar">
+              <div class="toolbar-group">
+                <button class="toolbar-button" id="undoButton" title="撤销">↶</button>
+                <button class="toolbar-button" id="redoButton" title="重做">↷</button>
+              </div>
+              <div class="toolbar-group">
+                <button class="toolbar-button" id="findButton" title="查找">🔍</button>
+                <button class="toolbar-button" id="replaceButton" title="替换">⇄</button>
+              </div>
+              <div class="toolbar-group">
+                <button class="toolbar-button" id="chapterDetectButton" title="章节检测">📖</button>
+              </div>
+            </div>
+            <div class="editor-content">
+              <textarea id="textEditor" placeholder="在此编辑文本内容..."></textarea>
+            </div>
+          </div>
+
+          <!-- 右侧预览区 -->
+          <div class="preview-pane" id="previewPane">
+            <div class="preview-header">
+              <h3>全文预览</h3>
+              <div class="preview-controls">
+                <button class="preview-button" id="zoomInButton">放大</button>
+                <button class="preview-button" id="zoomOutButton">缩小</button>
+                <button class="preview-button" id="resetZoomButton">重置</button>
+              </div>
+            </div>
+            <div class="preview-content" id="previewContent">
+              <div class="preview-text" id="previewText"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部状态栏 -->
+        <div class="status-bar">
+          <div class="status-left">
+            <span id="encodingInfo"></span>
+            <span id="lineInfo"></span>
+          </div>
+          <div class="status-right">
+            <span id="wordCount"></span>
+          </div>
+        </div>
       </section>
     </main>
   </div>
 
+  <!-- 查找替换对话框 -->
+  <div class="dialog" id="findReplaceDialog" hidden>
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3>查找与替换</h3>
+        <button class="dialog-close" id="dialogClose">×</button>
+      </div>
+      <div class="dialog-body">
+        <div class="form-group">
+          <label for="findInput">查找内容:</label>
+          <input type="text" id="findInput" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="replaceInput">替换为:</label>
+          <input type="text" id="replaceInput" class="form-input">
+        </div>
+        <div class="form-options">
+          <label class="checkbox-label">
+            <input type="checkbox" id="caseSensitive"> 区分大小写
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="wholeWord"> 全词匹配
+          </label>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="dialog-button" id="findNextButton">查找下一个</button>
+        <button class="dialog-button" id="replaceNextButton">替换下一个</button>
+        <button class="dialog-button" id="replaceAllButton">全部替换</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/fileHandler.js"></script>
+  <script src="js/editor.js"></script>
   <script src="js/app.js"></script>
 </body>
 

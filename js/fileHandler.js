@@ -13,8 +13,13 @@ class FileHandler {
     this.fileSize = document.getElementById('fileSize');
     this.fileType = document.getElementById('fileType');
     this.processButton = document.getElementById('processButton');
-    this.contentSection = document.getElementById('contentSection');
-    this.contentDisplay = document.getElementById('contentDisplay');
+    this.uploadSection = document.getElementById('uploadSection');
+    this.editorSection = document.getElementById('editorSection');
+    this.textEditor = document.getElementById('textEditor');
+    this.previewText = document.getElementById('previewText');
+    this.encodingInfo = document.getElementById('encodingInfo');
+    this.lineInfo = document.getElementById('lineInfo');
+    this.wordCount = document.getElementById('wordCount');
 
     // 添加进度条元素
     this.progressContainer = document.getElementById('progressContainer');
@@ -129,7 +134,6 @@ class FileHandler {
     this.errorMessage.textContent = message;
     this.errorMessage.style.display = 'block';
     this.fileInfo.setAttribute('hidden', '');
-    this.contentSection.setAttribute('hidden', '');
     this.hideProgress();
   }
 
@@ -149,7 +153,6 @@ class FileHandler {
     this.fileSize.textContent = this.formatFileSize(file.size);
     this.fileType.textContent = file.type || '未知';
     this.fileInfo.removeAttribute('hidden');
-    this.contentSection.setAttribute('hidden', '');
 
     // 保存文件引用以便后续处理
     this.currentFile = file;
@@ -350,21 +353,45 @@ class FileHandler {
    * @param {string} content - 文件内容
    */
   displayFileContent(content) {
-    this.contentDisplay.textContent = content;
-    this.contentSection.removeAttribute('hidden');
+    // 切换到编辑器视图
+    this.uploadSection.setAttribute('hidden', '');
+    this.editorSection.removeAttribute('hidden');
 
-    // 显示使用的编码信息
-    const encodingInfo = document.createElement('div');
-    encodingInfo.className = 'encoding-info';
-    encodingInfo.textContent = `使用编码: ${this.currentEncoding}`;
+    // 设置编辑器内容
+    this.textEditor.value = content;
 
-    // 如果已存在编码信息，先移除
-    const existingInfo = this.contentSection.querySelector('.encoding-info');
-    if (existingInfo) {
-      this.contentSection.removeChild(existingInfo);
-    }
+    // 设置预览内容
+    this.previewText.textContent = content;
 
-    this.contentSection.insertBefore(encodingInfo, this.contentSection.firstChild);
+    // 更新状态栏信息
+    this.updateStatusBar(content);
+
+    // 触发自定义事件，通知文件已加载
+    const event = new CustomEvent('fileLoaded', {
+      detail: {
+        content: content,
+        encoding: this.currentEncoding,
+        fileName: this.currentFile.name
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  /**
+   * 更新状态栏信息
+   * @param {string} content - 文件内容
+   */
+  updateStatusBar(content) {
+    // 更新编码信息
+    this.encodingInfo.textContent = `编码: ${this.currentEncoding}`;
+
+    // 更新行数信息
+    const lines = content.split('\n').length;
+    this.lineInfo.textContent = `行数: ${lines}`;
+
+    // 更新字数信息
+    const words = content.replace(/\s/g, '').length;
+    this.wordCount.textContent = `字数: ${words}`;
   }
 }
 
