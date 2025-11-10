@@ -1393,7 +1393,7 @@ class TextEditor {
     // 根据用户设置处理内容
     if (!preserveEmptyLines) {
       // 移除连续空行，保留单空行分隔段落
-      content = content.replace(/\s*\s*+/g, '');
+      content = content.replace(/\n\s*\n\s*\n+/g, '\n\n');
     }
 
     // 如果有章节信息且用户选择包含章节名，按章节格式导出
@@ -1535,23 +1535,23 @@ class TextEditor {
     // 获取编辑器滚动位置
     const editorScrollTop = this.editor.scrollTop;
     const editorHeight = this.editor.clientHeight;
-    
+
     // 计算当前可见区域
     const visibleStart = editorScrollTop;
     const visibleEnd = editorScrollTop + editorHeight;
 
     // 查找当前可见的章节
     let currentHighlightedChapter = -1;
-    
+
     this.chapters.forEach((chapter, index) => {
       // 简单实现：根据章节在内容中的大致位置判断
       const content = this.editor.value;
       const chapterStart = content.indexOf(chapter.content);
-      
+
       if (chapterStart >= 0) {
         // 估算章节在编辑器中的位置（简单实现）
         const estimatedPosition = (chapterStart / content.length) * this.editor.scrollHeight;
-        
+
         if (estimatedPosition >= visibleStart && estimatedPosition <= visibleEnd) {
           currentHighlightedChapter = index;
         }
@@ -1586,7 +1586,7 @@ class TextEditor {
    */
   toggleReadingMode() {
     this.readingModeEnabled = !this.readingModeEnabled;
-    
+
     if (this.readingModeEnabled) {
       this.showReadingModeSettings();
     } else {
@@ -1602,7 +1602,7 @@ class TextEditor {
     const readingDialogClose = document.getElementById('readingDialogClose');
     const resetReadingSettings = document.getElementById('resetReadingSettings');
     const applyReadingSettings = document.getElementById('applyReadingSettings');
-    
+
     if (!readingModeDialog || !readingDialogClose || !resetReadingSettings || !applyReadingSettings) {
       this.enterReadingMode();
       return;
