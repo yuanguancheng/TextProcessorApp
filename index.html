@@ -96,6 +96,19 @@
               </div>
               <ul class="chapter-list" id="chapterList" style="display: none;">
                 <!-- 章节列表将通过JavaScript动态生成 -->
+                <!-- 在index.html文件中，找到章节列表项的生成部分，修改为以下内容 -->
+                <!-- 章节列表项将通过JavaScript动态生成，但需要确保包含以下元素 -->
+                <li class="chapter-item" data-index="CHAPTER_INDEX">
+                  <input type="checkbox" class="chapter-checkbox">
+                  <span class="chapter-number">CHAPTER_NUMBER.</span>
+                  <span class="chapter-title" id="chapter-title-CHAPTER_INDEX">CHAPTER_TITLE</span>
+                  <input type="text" class="chapter-title-input" id="chapter-title-input-CHAPTER_INDEX"
+                    value="CHAPTER_TITLE" style="display: none;">
+                  <button class="chapter-edit-button" id="chapter-edit-CHAPTER_INDEX" title="编辑章节名">✏️</button>
+                  <button class="chapter-delete-button" id="chapter-delete-CHAPTER_INDEX" title="删除章节">🗑️</button>
+                  <span class="chapter-toggle">▼</span>
+                </li>
+
               </ul>
             </div>
           </div>
