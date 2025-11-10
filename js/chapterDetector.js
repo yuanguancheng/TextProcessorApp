@@ -229,8 +229,8 @@ class ChapterDetector {
     for (const match of sortedByPosition) {
       // 检查是否与已有匹配重叠
       const hasOverlap = filteredMatches.some(existing => {
-        // 放宽重叠判断阈值，从50个字符增加到20个字符
-        return Math.abs(existing.position - match.position) < 20;
+        // 进一步放宽重叠判断阈值，从20个字符减少到5个字符
+        return Math.abs(existing.position - match.position) < 5;
       });
 
       if (!hasOverlap) {
